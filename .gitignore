@@ -1,0 +1,7 @@
+.DS_Store
+Thumbs.db
+node_modules/
+*.log
+.workbuddy/
+_bak_*
+_avatar_bak/
