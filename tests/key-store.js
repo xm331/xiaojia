@@ -58,7 +58,7 @@ const CASES = [
 
 function mkEl(tag) {
   return {
-    tagName: (tag || 'div').toUpperCase(), style: {}, dataset: {}, children: [], files: [],
+    tagName: (tag || 'div').toUpperCase(), style: { setProperty(k, v) { this[k] = v; }, getPropertyValue(k) { return this[k] || ''; } }, dataset: {}, children: [], files: [],
     innerHTML: '', textContent: '', value: '', checked: false, disabled: false,
     scrollTop: 0, scrollHeight: 0, offsetHeight: 0, offsetWidth: 0, clientHeight: 0, clientWidth: 0,
     classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } },

@@ -6,7 +6,7 @@ const html = fs.readFileSync(P, 'utf8');
 
 function mkEl(tag) {
   return {
-    tagName: (tag || 'div').toUpperCase(), style: {}, dataset: {}, children: [], files: [],
+    tagName: (tag || 'div').toUpperCase(), style: { setProperty(k, v) { this[k] = v; }, getPropertyValue(k) { return this[k] || ''; } }, dataset: {}, children: [], files: [],
     innerHTML: '', textContent: '', value: '', checked: false, disabled: false, rel: '', href: '',
     classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } },
     appendChild(c) { this.children.push(c); return c; },

@@ -8,7 +8,7 @@ const html = fs.readFileSync(P, 'utf8');
 
 function mkEl(tag) {
   return {
-    tagName: (tag || 'div').toUpperCase(), style: {}, dataset: {}, children: [], files: [],
+    tagName: (tag || 'div').toUpperCase(), style: { setProperty(k, v) { this[k] = v; }, getPropertyValue(k) { return this[k] || ''; } }, dataset: {}, children: [], files: [],
     innerHTML: '', textContent: '', value: '', checked: false, disabled: false,
     classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } },
     appendChild(c) { this.children.push(c); return c; },
@@ -111,7 +111,7 @@ const member = { id: 'a', name: 'Nyx', url: 'u', key: 'sk-test', model: 'zai-org
   mode = 'short';
   await callModel(member, '在干嘛', [], {}, null);
   const sys = sentBody.messages.map(x => typeof x.content === 'string' ? x.content : '').join('\n');
-  console.log((sys.indexOf('一条最多12个字') >= 0 ? '✅' : '❌') + ' 闲聊：一条最多 12 字 / 总共 25 字');
+  console.log((sys.indexOf('别掐着字数') >= 0 ? '✅' : '❌') + ' 闲聊：字数松绑（短句为主、好笑可长）');
   console.log((sentBody.max_tokens === 55 ? '✅' : '❌') + ' 日常上限 = ' + sentBody.max_tokens + '（原 40）');
 
   console.log('\n== C. 被掐断时不留半句 ==');

@@ -7,7 +7,7 @@ const P = process.argv[2] || __P;
 
 function mkEl(tag) {
   return {
-    tagName: (tag || 'div').toUpperCase(), style: {}, dataset: {}, children: [], files: [],
+    tagName: (tag || 'div').toUpperCase(), style: { setProperty(k, v) { this[k] = v; }, getPropertyValue(k) { return this[k] || ''; } }, dataset: {}, children: [], files: [],
     innerHTML: '', textContent: '', value: '', checked: false, disabled: false,
     classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } },
     appendChild(c) { this.children.push(c); return c; },
@@ -94,16 +94,17 @@ const reset = () => { calls.length = 0; };
 
 (async () => {
   // ── 静态检查：起头词、台词编号、省钱参数 ──
-  const pool = vm.runInContext('RPPOOL', win);
+  const pool = vm.runInContext('CHAIN_MEMES', win);
   const fear = pool.find(r => r.name === '恐惧派');
   const res = pool.find(r => r.name === '资源派');
+  console.log((vm.runInContext('typeof matchChainMeme', win) === 'function' ? '✅' : '❌') + ' 连环梗匹配函数 matchChainMeme 在位');
   console.log('== 静态检查 ==');
   console.log((fear.userLead && fear.userLead.test('根本就没有这样的事情') ? '✅' : '❌') + ' 恐惧派认出「根本就没有这样的事情」');
   console.log((fear.userLead && fear.userLead.test('我吃了一包辣条') ? '❌ 误伤' : '✅') + ' 普通话不会误判成起头');
   console.log((res.userLead && res.userLead.test('有') && res.userLead.test('有的。') ? '✅' : '❌') + ' 资源派认出「有」「有的。」');
   console.log((res.userLead && !res.userLead.test('有点累了') ? '✅' : '❌') + ' 「有点累了」不会误判');
-  const mm = html.match(/max_tokens:heartfelt\?(\d+):(\d+)/);
-  console.log((mm && mm[1] === '260' ? '✅' : '❌') + ' 深度回复上限 ' + (mm ? mm[1] : '?') + ' 字');
+  const mm = html.match(/maxTok=\[(\d+),(\d+),(\d+),(\d+)\]/);
+  console.log((mm && mm[3] === '260' ? '✅' : '❌') + ' 深度回复上限 ' + (mm ? mm[3] : '?') + ' 字');
   const memLine = html.match(/else if\(heartfelt\)memShow=sharedMem\.length<=(\d+)/);
   console.log((memLine && memLine[1] === '800' ? '✅' : '❌') + ' 深度记忆上限 ' + (memLine ? memLine[1] : '?') + ' 字');
 

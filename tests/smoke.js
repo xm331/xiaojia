@@ -9,7 +9,7 @@ const code = [...html.matchAll(/<script(?![^>]*src=)[^>]*>([\s\S]*?)<\/script>/g
 function mkEl(tag) {
   const el = {
     tagName: (tag || 'div').toUpperCase(),
-    style: {}, dataset: {}, children: [], files: [],
+    style: { setProperty(k, v) { this[k] = v; }, getPropertyValue(k) { return this[k] || ''; } }, dataset: {}, children: [], files: [],
     innerHTML: '', textContent: '', value: '', checked: false, disabled: false,
     scrollTop: 0, scrollHeight: 0, offsetHeight: 0, offsetWidth: 0, clientHeight: 0, clientWidth: 0,
     classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } },

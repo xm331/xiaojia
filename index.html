@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 三人行 · 多模型并发的 AI 群聊，纯前端单文件实现 -->
+<!-- 小米的第一个项目 -->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="三人行">
+<meta name="apple-mobile-web-app-title" content="小米的小家">
 <meta name="theme-color" content="#16151c">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="format-detection" content="telephone=no">
@@ -18,27 +18,27 @@
 <link rel="apple-touch-icon" sizes="192x192" href="home.jpg">
 <link rel="icon" type="image/jpeg" href="home.jpg">
 <link rel="manifest" id="manifestLink" href="manifest.webmanifest">
-<!-- z114：首字提速——提前跟模型接口握手。移动网络冷启动 TLS 握手要 100~300ms，等 fetch 那刻才开始就白等了。
-     crossorigin 必须带，否则建的连接跟 CORS 请求对不上、复用不了。 -->
+<!-- z114：首字提速——提前跟模型接口握手。移动网络冷启动时 TLS 握手要 100~300ms，
+     等 fetch 那一刻才开始握手，这段就白等了。crossorigin 必须带，否则建的连接跟 CORS 请求对不上、复用不了。 -->
 <link rel="preconnect" href="https://api.siliconflow.cn" crossorigin>
 <link rel="dns-prefetch" href="https://api.siliconflow.cn">
-<title>三人行</title>
+<title>小米的小家</title>
 <style>
 
-/* ===== 统一色板：低饱和莫兰迪 · 暖灰紫（精修） ===== */
+/* ===== 色板：微信浅色（变量名保留以兼容仍在引用的样式） ===== */
 :root{
-  --bg0:#16151c; --bg1:#211f29; --bg2:#1b1922; --panel:#26232f; --panelA:rgba(38,35,47,.88);
-  --line:#3a3646; --lineSoft:#302d3b; --lineFaint:#292631;
-  --text:#f0ecf3; --text2:#cbc5d4; --muted:#948da1; --muted2:#726c7f;
-  --accent:#d0a981; --accent2:#a6b9aa;
-  --accentRgb:208,169,129; --accent2Rgb:166,185,170;
-  --c-gpt:#cbb0da; --c-claude:#d9ad8b; --c-deep:#a6bfcd;
-  --me1:#6d5e78; --me2:#52465e;
-  --glow1:#6b6f9c; --glow2:#8c7596; --glow3:#a38590; --glow4:#6f938b;
-  --sh1:0 2px 10px rgba(0,0,0,.2);
-  --sh2:0 10px 30px rgba(0,0,0,.3);
-  --sh3:0 28px 70px rgba(0,0,0,.5);
-  --hairline:inset 0 1px 0 rgba(255,255,255,.06);
+  --bg0:#ededed; --bg1:#f7f7f7; --bg2:#ffffff; --panel:#ffffff; --panelA:rgba(255,255,255,.96);
+  --line:#d9d9d9; --lineSoft:#e5e5e5; --lineFaint:#eeeeee;
+  --text:#191919; --text2:#4a4a4a; --muted:#9a9a9a; --muted2:#b0b0b0;
+  --accent:#07c160; --accent2:#576b95;
+  --accentRgb:7,193,96; --accent2Rgb:87,107,149;
+  --c-gpt:#7f77dd; --c-claude:#0f6e56; --c-deep:#185fa5;
+  --me1:#95ec69; --me2:#95ec69;
+  --glow1:#ededed; --glow2:#ededed; --glow3:#ededed; --glow4:#ededed;
+  --sh1:0 1px 3px rgba(0,0,0,.06);
+  --sh2:0 4px 14px rgba(0,0,0,.1);
+  --sh3:0 8px 30px rgba(0,0,0,.14);
+  --hairline:inset 0 1px 0 rgba(255,255,255,.7);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%}
@@ -47,23 +47,6 @@ body{
   color:var(--text);overflow:hidden;position:relative;background:var(--bg0);
   -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
 }
-/* ===== 流光背景：低饱和光晕 + 一层柔光罩 ===== */
-#aurora{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;background:var(--bg0)}
-#aurora::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% -10%,rgba(var(--accentRgb),.09),transparent 55%),radial-gradient(ellipse at 50% 110%,rgba(var(--accent2Rgb),.06),transparent 55%)}
-#aurora .blob{position:absolute;border-radius:50%;filter:blur(120px);opacity:.3;will-change:transform}
-#aurora .b1{width:60vw;height:60vw;left:-15vw;top:-20vw;background:radial-gradient(circle,var(--glow1),transparent 70%);animation:float1 22s ease-in-out infinite}
-#aurora .b2{width:55vw;height:55vw;right:-15vw;top:-10vw;background:radial-gradient(circle,var(--glow2),transparent 70%);animation:float2 28s ease-in-out infinite}
-#aurora .b3{width:50vw;height:50vw;left:15vw;bottom:-25vw;background:radial-gradient(circle,var(--glow3),transparent 70%);animation:float3 25s ease-in-out infinite}
-#aurora .b4{width:45vw;height:45vw;right:5vw;bottom:-20vw;background:radial-gradient(circle,var(--glow4),transparent 70%);animation:float4 30s ease-in-out infinite}
-@keyframes float1{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(18vw,14vh) scale(1.25)}66%{transform:translate(8vw,28vh) scale(.9)}}
-@keyframes float2{0%,100%{transform:translate(0,0) scale(1)}40%{transform:translate(-20vw,20vh) scale(1.2)}70%{transform:translate(-8vw,6vh) scale(.85)}}
-@keyframes float3{0%,100%{transform:translate(0,0) scale(1)}35%{transform:translate(12vw,-18vh) scale(1.3)}70%{transform:translate(-6vw,-8vh) scale(.9)}}
-@keyframes float4{0%,100%{transform:translate(0,0) scale(1)}45%{transform:translate(-16vw,-14vh) scale(1.15)}75%{transform:translate(-4vw,-24vh) scale(.9)}}
-@media(prefers-reduced-motion:reduce){#aurora .blob{animation:none}}
-#stars{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:-1}
-.star{position:absolute;background:#fff;border-radius:50%;opacity:.5;animation:twinkle 3s ease-in-out infinite}
-@keyframes twinkle{0%,100%{opacity:.15}50%{opacity:.7}}
-
 /* ===== 主容器 ===== */
 #app{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;max-width:900px;margin:0 auto;box-shadow:var(--sh3)}
 
@@ -88,12 +71,12 @@ body{
 #chatBox{flex:1;overflow-y:auto;padding:26px 20px 14px;scroll-behavior:smooth}
 #chatBox::-webkit-scrollbar{width:6px}
 #chatBox::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:6px}
-.msg{display:flex;gap:12px;margin-bottom:24px;animation:msgIn .25s ease both}
+.msg{display:flex;gap:12px;margin-bottom:24px}
 @keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .msg .mavatar{width:48px;height:48px;flex:0 0 48px;border-radius:0;overflow:visible;display:flex;align-items:center;justify-content:center;
   font-size:20px;background:none;border:none}
-.msg .mavatar img{width:100%;height:100%;object-fit:cover;border-radius:14px;box-shadow:0 5px 12px rgba(0,0,0,.45);filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
-.msg.me .mavatar img{border-radius:14px;filter:brightness(1.06);box-shadow:0 3px 9px rgba(0,0,0,.45)}
+.msg .mavatar img{width:100%;height:100%;object-fit:cover;border-radius:5px;box-shadow:none;filter:none}
+.msg.me .mavatar img{border-radius:5px;filter:none;box-shadow:none}
 .msg.me .mavatar{cursor:pointer}
 .msg.me .mavatar:hover{filter:brightness(1.35)}
 .msg.me .mavatar:hover::after{content:"换";position:absolute;font-size:12px;color:#fff;text-shadow:0 1px 3px #000;pointer-events:none}
@@ -178,14 +161,7 @@ body{
 #emojiPanel .ep-empty{grid-column:1/-1;text-align:center;color:var(--muted);font-size:12px;padding:22px 8px;line-height:1.7}
 #emojiPanel .ep-tip{font-size:11px;color:var(--muted2);margin-top:10px;text-align:center;letter-spacing:.3px}
 #btnEmoji{flex:0 0 38px}
-/* 深度思考开关：关着是个普通小按钮，开着亮起来 */
-#btnDeep{flex:0 0 auto;width:auto;padding:0 11px;transition:.2s;font-size:11.5px;letter-spacing:.6px;font-weight:600}
-#btnDeep.on{background:rgba(var(--accentRgb),.26);border-color:rgba(var(--accentRgb),.75);color:var(--accent);
-  box-shadow:0 0 0 1px rgba(var(--accentRgb),.3),0 0 16px rgba(var(--accentRgb),.3)}
-#btnDeep.on::after{content:"";position:absolute;right:5px;top:5px;width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulseDot 1.8s infinite}
-#btnDeep{position:relative}
-@keyframes pulseDot{0%,100%{opacity:1}50%{opacity:.25}}
-@media(max-width:520px){#btnDeep{padding:0 8px;font-size:10.5px;letter-spacing:0}#inputRow{gap:6px}}
+@media(max-width:520px){#inputRow{gap:6px}}
 
 /* ===== 弹窗 ===== */
 .overlay{position:fixed;inset:0;z-index:50;background:rgba(10,9,14,.78);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:18px}
@@ -227,18 +203,175 @@ details.member .mavatar img{width:100%;height:100%;object-fit:cover}
   #composer{padding:12px 14px 16px}
   #btnSend{padding:0 17px}
 }
-#targetList .avatarImg{width:28px;height:28px;object-fit:cover;object-position:top;border-radius:10px;display:block}
 
+/* ===================== z117 微信皮肤覆盖层（只加不删，压在旧样式之上） ===================== */
+:root{--wx-bg:#ededed;--wx-panel:#f7f7f7;--wx-line:#d9d9d9;--wx-text:#191919;--wx-muted:#9a9a9a;--wx-green:#07c160;--wx-me:#95ec69}
+html,body{background:#ededed!important}
+#app{background:#ededed!important;box-shadow:none!important}
+
+/* 外层：列表页在下，聊天页盖在上面，用 translateX 滑入滑出 */
+#wxStage{position:relative;width:100%;height:100%;overflow:hidden;background:var(--wx-bg);font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif}
+#convList{position:absolute;inset:0;z-index:3;overflow-y:auto;background:var(--wx-bg)}
+#chatLayer{position:absolute;inset:0;z-index:4;transform:translateX(100%);transition:transform .28s ease;will-change:transform}
+#chatLayer.show{transform:translateX(0)}
+.wx-inner{max-width:900px;margin:0 auto;min-height:100%;background:var(--wx-bg)}
+
+/* 会话列表 */
+.wx-head{height:60px;display:flex;align-items:center;justify-content:center;position:relative;background:#ededed;border-bottom:.5px solid var(--wx-line)}
+.wx-head .wx-title{font-size:17px;font-weight:500;color:var(--wx-text)}
+.wx-head .wx-add{position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:26px;color:var(--wx-text);line-height:1}
+.wx-search{height:36px;margin:8px 12px;border-radius:6px;background:#e4e4e4;display:flex;align-items:center;justify-content:center;color:#9a9a9a;font-size:13px}
+.wx-item{display:flex;align-items:center;gap:11px;padding:10px 15px;background:#fff;cursor:pointer;border-bottom:.5px solid #f0f0f0;-webkit-tap-highlight-color:rgba(0,0,0,.08)}
+.wx-item:active{background:#dcdcdc}
+.wx-item.wx-pinned{background:#f7f7f7}
+.wx-av{width:46px;height:46px;flex:0 0 46px;border-radius:5px;overflow:hidden;background:#e5e5e5}
+.wx-av img{width:100%;height:100%;object-fit:cover;display:block}
+.wx-meta{flex:1;min-width:0}
+.wx-name{font-size:16px;color:var(--wx-text);line-height:1.45}
+.wx-last{font-size:13px;color:var(--wx-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.5}
+.wx-time{font-size:11px;color:#b0b0b0;align-self:flex-start;padding-top:3px;flex:0 0 auto}
+#btnBroom:active{transform:scale(.88)}
+.wx-clear{border:0;background:#fff;color:#e64340;padding:10px 26px;border-radius:8px;font-size:14px;cursor:pointer}
+.wx-clear:active{background:#f2f2f2}
+
+/* 微信群四宫格头像 */
+.ggrid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1px;width:100%;height:100%;background:var(--wx-line);border-radius:5px;overflow:hidden}
+.ggrid .gc{display:block;overflow:hidden;background:#fff}
+.ggrid .gc img{width:100%!important;height:100%!important;object-fit:cover;display:block;border-radius:0!important;box-shadow:none!important;filter:none!important}
+
+/* 聊天页顶栏 */
+#topbar{height:56px!important;flex-basis:56px!important;background:#ededed!important;border-bottom:.5px solid var(--wx-line)!important;box-shadow:none!important;padding:0 8px!important;gap:6px!important;position:relative}
+#btnBack{width:32px;height:44px;flex:0 0 32px;border:0;background:transparent;color:var(--wx-text);font-size:32px;line-height:1;cursor:pointer;padding:0 0 3px 0}
+#topbar .groupAvatar{display:none!important}
+#topbar .titles{text-align:center;display:flex;align-items:center;justify-content:center;flex:1}
+.gname{font-size:17px!important;font-weight:500!important;color:var(--wx-text)!important;letter-spacing:0!important}
+.gsub{display:none!important}
+#topbar .ibtn{display:none!important}
+.wx-topright{position:absolute;right:8px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:8px}
+#spendTop{font-size:11px;color:#9a9a9a;white-space:nowrap;font-variant-numeric:tabular-nums}
+#btnBroom{width:30px;height:30px;border:0;background:transparent;cursor:pointer;padding:0;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;filter:grayscale(.35)}
+#btnBroom:active{transform:scale(.88)}
+
+/* 聊天气泡 */
+#chatBox{background:var(--wx-bg)!important;padding:14px 12px!important}
+#chatBox::-webkit-scrollbar-thumb{background:#c8c8c8!important}
+.msg{gap:8px!important;margin-bottom:16px!important}
+.msg .mavatar{width:40px!important;height:40px!important;flex:0 0 40px!important;background:none!important;border:0!important;font-size:20px!important}
+.msg .mavatar img{border-radius:5px!important;box-shadow:none!important;filter:none!important}
+.msg .body{max-width:72%!important}
+.msg .meta{font-size:11px!important;color:var(--wx-muted)!important;margin:0 0 4px 2px!important;letter-spacing:0!important}
+.msg .badge{display:none!important}
+.msg .bubble{position:relative;background:#fff!important;border:.5px solid #e5e5e5!important;border-radius:6px!important;padding:9px 12px!important;font-size:15px!important;line-height:1.6!important;color:var(--wx-text)!important;box-shadow:none!important}
+.msg .bubble::before{content:"";position:absolute;left:-5px;top:12px;width:8px;height:8px;background:#fff;border-left:.5px solid #e5e5e5;border-bottom:.5px solid #e5e5e5;transform:rotate(45deg)}
+.msg.me .body{align-items:flex-end!important}
+.msg.me .meta{margin:0 2px 4px 0!important}
+.msg.me .bubble{background:var(--wx-me)!important;border-color:var(--wx-me)!important;border-radius:6px!important;color:var(--wx-text)!important;box-shadow:none!important}
+.msg.me .bubble::before{left:auto;right:-5px;background:var(--wx-me);border-color:var(--wx-me);border-left:0;border-bottom:.5px solid var(--wx-me);border-top:.5px solid var(--wx-me);border-right:.5px solid var(--wx-me)}
+.msg.system .bubble,.msg.memory .bubble{background:transparent!important;border:0!important;color:#b0b0b0!important;border-radius:4px!important;font-size:12px!important;padding:4px 8px!important;box-shadow:none!important}
+.msg.system .bubble::before,.msg.memory .bubble::before{display:none}
+.msg.who-gpt .meta,.msg.who-claude .meta,.msg.who-deepseek .meta{color:var(--wx-muted)!important}
+
+/* 输入区 */
+#composer{background:var(--wx-panel)!important;border-top:.5px solid var(--wx-line)!important;box-shadow:none!important;padding:8px 10px 10px!important}
+#atBar,#chips{display:none!important}
+#attachRow{margin-bottom:8px!important}
+#inputRow{gap:8px!important;align-items:flex-end!important}
+.wx-round{width:36px;height:36px;flex:0 0 36px;border:0;background:transparent;color:var(--wx-text);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;border-radius:6px}
+.wx-round:active{background:#e5e5e5}
+.wx-round svg{display:block}
+#inputBox{min-height:36px!important;max-height:110px!important;border-radius:6px!important;border:.5px solid #e0e0e0!important;background:#fff!important;font-size:15px!important;padding:8px 11px!important;box-shadow:none!important}
+#inputBox:focus{border-color:var(--wx-green)!important;box-shadow:none!important}
+#btnSend{height:36px!important;flex:0 0 auto!important;padding:0 16px!important;border-radius:6px!important;border:0!important;background:var(--wx-green)!important;color:#fff!important;font-size:14px!important;font-weight:500!important;box-shadow:none!important;letter-spacing:0!important}
+#btnSend:hover:not(:disabled){transform:none!important;box-shadow:none!important}
+#statusLine{margin-top:6px!important;height:12px!important;color:var(--wx-muted)!important}
+
+/* 表情面板：微信白底 */
+#emojiPanel{background:#fff!important;border:1px solid var(--wx-line)!important;border-radius:10px!important;box-shadow:0 4px 20px rgba(0,0,0,.12)!important;padding:12px!important}
+#emojiPanel .ep-tab{color:var(--wx-muted)!important}
+#emojiPanel .ep-tab.on{background:#e8f8ee!important;border-color:var(--wx-green)!important;color:var(--wx-green)!important}
+#emojiPanel .ep-item:hover{background:#f0f0f0!important}
+#emojiPanel .ep-tip{color:var(--wx-muted)!important}
+
+/* 加号面板 */
+#plusPanel{position:absolute;left:10px;right:10px;bottom:calc(100% + 8px);background:#fff;border:1px solid var(--wx-line);border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.12);padding:16px 12px;z-index:21;display:none}
+#plusPanel.show{display:block}
+.pp-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;max-width:220px;margin:0 auto}
+.pp-item{display:flex;flex-direction:column;align-items:center;gap:7px;border:0;background:transparent;cursor:pointer;color:#4a4a4a;font-size:12px;padding:0}
+.pp-item .pp-ico{width:48px;height:48px;border-radius:10px;background:#f2f2f2;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--wx-text)}
+.pp-item:active .pp-ico{background:#e5e5e5}
+
+/* IQ 胶囊按钮（照抄参考 chip：档位名 + 发光点阵） */
+.iq-chip{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 9px;border-radius:9px;cursor:pointer;border:1px solid #e2e2e2;background:#fff;color:#8a8a8a;font:inherit;font-size:12px;line-height:20px;transition:border-color .2s,background .2s,color .2s;flex:0 0 auto}
+.iq-chip:hover{background:#f7f7f7}
+.iq-chip.on{border-color:var(--iq-c,#0f8a5f);color:var(--iq-c,#0f8a5f)}
+.iq-label{font-weight:600;letter-spacing:.04em}
+.iq-meter{display:inline-flex;align-items:center;gap:2px}
+.iq-meter i{width:4px;height:4px;border-radius:50%;background:#d0d0d0;transition:background .25s,box-shadow .25s}
+.iq-meter i.lit{background:var(--iq-c,#0f8a5f);box-shadow:0 0 4px var(--iq-c,#0f8a5f)}
+
+/* 思考深度面板：照抄参考 dsh-think-intensity 的轨道/拇指/光圈/光点 */
+#thinkSheet{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% + 10px);width:min(330px,calc(100vw - 30px));background:#fff;border:1px solid var(--wx-line);border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.16);padding:14px 16px 15px;z-index:22;display:none}
+#thinkSheet.show{display:block;animation:tsPop .34s cubic-bezier(.2,1.2,.36,1) both}
+@keyframes tsPop{0%{opacity:0;transform:translateX(-50%) translateY(14px) scale(.92)}60%{opacity:1;transform:translateX(-50%) translateY(-3px) scale(1.015)}100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+.ts-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.ts-name{font-size:12px;color:#9a9a9a}
+.ts-level{font-size:13px;font-weight:600;color:var(--iq-c,#5dcaa5);transition:color .3s}
+.ts-row{position:relative;width:100%;height:30px;border-radius:999px;background:#ededed;box-shadow:inset 0 0 0 1px rgba(0,0,0,.04);touch-action:none;cursor:grab}
+.ts-row.dragging{cursor:grabbing}
+.ts-ticks{position:absolute;left:0;right:0;top:0;height:100%;display:flex;align-items:center;justify-content:space-between;padding:0 15px;pointer-events:none}
+.ts-ticks i{width:2px;height:8px;border-radius:1px;background:rgba(0,0,0,.12)}
+.ts-fill{position:absolute;left:0;top:0;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#3ddcff,#7a5cff);box-shadow:0 0 12px 1px var(--iq-glow,rgba(61,220,255,.55));transition:width .16s cubic-bezier(.22,1.2,.36,1),background .3s}
+.ts-row.dragging .ts-fill{transition:background .3s}
+.ts-shine{position:absolute;inset:0;border-radius:999px;background:linear-gradient(110deg,transparent 20%,rgba(255,255,255,.55) 48%,transparent 75%);background-size:220% 100%;animation:tsShine 2.6s linear infinite;pointer-events:none}
+@keyframes tsShine{from{background-position:140% 0}to{background-position:-140% 0}}
+.ts-sparks{position:absolute;left:0;top:50%;width:0;height:44px;margin-top:-22px;pointer-events:none;overflow:visible}
+.ts-spark{position:absolute;width:3px;height:3px;border-radius:50%;background:#fff;opacity:.06;box-shadow:0 0 6px 2px var(--iq-glow,rgba(61,220,255,.9));animation:tsSpark 2.1s ease-in-out infinite;transition:opacity .4s}
+@keyframes tsSpark{0%,100%{transform:translate3d(0,0,0) scale(.7);opacity:.15}45%{transform:translate3d(var(--dx,6px),var(--dy,-14px),0) scale(1.25);opacity:1}}
+.ts-knob{position:absolute;top:50%;left:0;width:30px;height:26px;margin:-13px 0 0 -15px;border-radius:999px;z-index:2;pointer-events:none;transform:scale(var(--iq-scale,1));transition:left .16s cubic-bezier(.22,1.2,.36,1),transform .18s ease}
+.ts-row.dragging .ts-knob{transition:transform .18s ease}
+.ts-knob-core{position:absolute;inset:4px;border-radius:999px;background:#fff;box-shadow:0 0 8px 2px var(--iq-glow,rgba(122,92,255,.85)),0 0 18px 6px var(--iq-soft,rgba(122,92,255,.5))}
+.ts-knob-ring{position:absolute;inset:-4px;border-radius:999px;opacity:.7;border:1.5px solid var(--iq-glow,rgba(122,92,255,.85));animation:tsRing 1.9s ease-out infinite}
+@keyframes tsRing{0%{transform:scale(.7);opacity:.8}70%{transform:scale(1.6);opacity:0}100%{transform:scale(1.6);opacity:0}}
+@media(prefers-reduced-motion:reduce){#thinkSheet.show{animation:none}.ts-shine,.ts-knob-ring,.ts-spark{animation:none}}
+
+/* 弹窗也换浅色 */
+.overlay{background:rgba(0,0,0,.45)!important;backdrop-filter:none!important}
+.card{background:#fff!important;border:0!important;border-radius:14px!important;box-shadow:0 8px 40px rgba(0,0,0,.2)!important;color:var(--wx-text)!important}
+.card h2,.card h3{color:var(--wx-text)!important}
+.card .sub,.card .memText{color:#666!important}
+.card .memCard,details.member{background:#f7f7f7!important;border-color:#e5e5e5!important}
+.card .setRow label,.card .setRow .sub{color:#666!important}
+.card .setRow input,.card .setRow select{background:#fff!important;border-color:#ddd!important;color:var(--wx-text)!important}
+.card .mini{background:#fff!important;border-color:#ddd!important;color:#333!important}
+.card .closeBtn{background:#e8f8ee!important;border-color:var(--wx-green)!important;color:var(--wx-green)!important;box-shadow:none!important}
+#keyDiag{background:#f7f7f7!important;color:#666!important}
+.thumb{background:#eee!important;border-color:#ddd!important}
+
+@media(max-width:520px){
+  .wx-inner{max-width:100%}
+  #topbar{height:54px!important;flex-basis:54px!important}
+  .wx-item{padding:11px 14px}
+}
+@media(prefers-reduced-motion:reduce){#chatLayer{transition:none}}
 </style>
 </head>
 <body>
-<div id="aurora"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div></div>
-<div id="stars"></div>
+<div id="wxStage">
+<div id="convList">
+  <div class="wx-inner">
+    <div class="wx-head"><span class="wx-title">四人行</span><span class="wx-add">+</span></div>
+    <div class="wx-search">搜索</div>
+    <div id="convItems"></div>
+  </div>
+</div>
 
+<div id="chatLayer">
 <div id="app">
   <div id="topbar">
+    <button id="btnBack" title="返回会话列表" aria-label="返回">‹</button>
     <div class="groupAvatar" id="groupAvatar" onclick="pickMyAvatar()" title="点一下，换头像"><img data-sc="1" onerror="this.style.display='none'" src="home.jpg" alt=""></div>
-    <div class="titles"><span class="gname" style="font-size:16.5px">三人行</span><span class="gsub" id="spendInfo"></span></div>
+    <div class="titles"><span class="gname" style="font-size:16.5px">小家</span><span class="gsub" id="spendInfo"></span></div>
+    <div class="wx-topright"><span id="spendTop" title="今天大概花了多少钱">今日 ¥0.00</span><button id="btnBroom" title="清空聊天记录" aria-label="清空聊天记录">🧹</button></div>
   </div>
 
   <div id="chatBox"></div>
@@ -249,31 +382,35 @@ details.member .mavatar img{width:100%;height:100%;object-fit:cover}
       <div class="ep-grid" id="epGrid"></div>
       <div class="ep-tip" id="epTip">点一下插入输入框</div>
     </div>
+    <div id="plusPanel">
+      <div class="pp-grid">
+        <button class="pp-item" id="ppCamera" title="拍摄"><span class="pp-ico"><svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="#07c160" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3l1.5-2h7L17 7h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.4"/></svg></span>拍摄</button>
+        <button class="pp-item" id="ppPhoto" title="图片"><span class="pp-ico"><svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="#576b95" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.6"/><path d="m4 17 5-5 3.5 3.5L16 12l4 4"/></svg></span>图片</button>
+      </div>
+    </div>
+    <div id="thinkSheet">
+      <div class="ts-head"><span class="ts-name">思考深度</span><span class="ts-level" id="tsLevel">不思考</span></div>
+      <div class="ts-row" id="tsRow">
+        <div class="ts-ticks"><i></i><i></i><i></i><i></i></div>
+        <div class="ts-fill" id="tsFill"><span class="ts-shine"></span></div>
+        <div class="ts-sparks" id="tsSparks"></div>
+        <div class="ts-knob" id="tsKnob"><span class="ts-knob-core"></span><span class="ts-knob-ring"></span></div>
+      </div>
+    </div>
     <div id="attachRow"></div>
     <div id="inputRow">
-      <button class="ibtn" id="btnEmoji" title="表情" aria-label="表情">😀</button>
-      <button class="ibtn" id="btnDeep" title="深度思考（关）" aria-label="深度思考">深度思考</button>
-      <button class="ibtn" id="btnAttach" title="私聊/发图" aria-label="私聊或发图"><svg width="22" height="22" viewBox="0 0 24 24" style="display:block;margin:auto"><g stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="4" y1="6.5" x2="20" y2="6.5"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17.5" x2="20" y2="17.5"/></g></svg></button>
-      <textarea id="inputBox" rows="1"></textarea>
+      <textarea id="inputBox" rows="1" placeholder="发消息…"></textarea>
+      <button class="wx-round" id="btnEmoji" title="表情" aria-label="表情"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r="1" fill="currentColor" stroke="none"/><path d="M8 14.5a5 5 0 0 0 8 0" stroke-linecap="round"/></svg></button>
+      <button class="wx-round" id="btnAttach" title="更多" aria-label="更多"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></button>
+      <button class="iq-chip" id="btnIQ" title="思考深度"><span class="iq-label">IQ</span><span class="iq-meter" id="iqMeter"><i></i><i></i><i></i><i></i></span></button>
       <button id="btnSend">发送</button>
     </div>
     <input type="file" id="fileInput" accept="image/*,video/*" multiple style="display:none">
+    <input type="file" id="camInput" accept="image/*" capture="environment" style="display:none">
     <div id="statusLine"></div>
   </div>
 </div>
-
-<!-- 找谁聊 弹窗 -->
-<div class="overlay" id="targetOverlay">
-  <div class="card">
-    <h2>💬 找谁聊？</h2>
-    <div id="pickImageRow" style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:14px;border:1px solid rgba(159,178,164,.35);background:rgba(159,178,164,.10);cursor:pointer;margin-top:14px">
-      <span style="font-size:22px">📷</span>
-      <span style="flex:1;font-size:14px">发张图片</span>
-      <span id="pickImageTarget" style="color:var(--accent2);font-size:12px"></span>
-    </div>
-    <div id="targetList" style="display:flex;flex-direction:column;gap:10px;margin-top:10px"></div>
-    <button class="closeBtn" onclick="document.getElementById('targetOverlay').classList.remove('show')">先不了 🦞</button>
-  </div>
+</div>
 </div>
 
 <!-- 首次填钥匙弹窗 -->
@@ -309,7 +446,7 @@ details.member .mavatar img{width:100%;height:100%;object-fit:cover}
   }catch(e){}
 })();
 /* 版本号：每次改内容我都会改这个号，页面打开时自动探测更新 */
-const APP_VER="1.4.0";
+const APP_VER="1.5.0";
 /* ===== 自动更新探测：绕开浏览器缓存，发现新版就自动刷新一次 ===== */
 (function(){
   try{
@@ -327,18 +464,12 @@ const APP_VER="1.4.0";
       .catch(()=>{});
   }catch(e){}
 })();
-/* ===== 背景 ===== */
-(function(){
-  /* z78：背景改为纯深色，去掉原来飘动的三张旧头像贴纸，只留细微星点氛围 */
-  const stars=document.getElementById('stars');
-  if(stars)for(let i=0;i<40;i++){const s=document.createElement('div');s.className='star';
-    const sz=Math.random()*1.6+0.8;s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:${sz}px;height:${sz}px;animation-delay:${Math.random()*3}s`;stars.appendChild(s);}
-})();
 
 /* ===== 接口 ===== */
 /* 硅基流动 API 地址（三家默认都走它） */
 const SF_URL="https://api.siliconflow.cn/v1";
-/* z114：预连接。head 里那条只盖默认域名；接口换成自己的代理时，这里补一条。去重，重复调用不产生额外连接。 */
+/* z114：预连接。head 里那条只盖默认域名；万一有人把接口换成自己的代理，这里补一条。
+   去重靠 Set，重复调用不产生额外连接。 */
 const _preLinked={};
 function preconnect(url){
   try{
@@ -358,8 +489,9 @@ function preconnectMembers(){
   preconnect(SF_URL);
 }
 
-/* ===== 头像：初始是内置头像，用户点自己的头像可上传替换（压缩到 128×128 存本地，不上传任何服务器） ===== */
+/* ===== 头像（base64 内嵌，不依赖网络） ===== */
 const MY_AVATAR="img:me|me.jpg";
+/* 点自己的头像可以换一张：前端裁成方形压到 128×128，只存这台设备，不上传任何服务器 */
 const LS_MY_AVATAR="ai_my_avatar_v1";
 let myAvatarData="";
 try{myAvatarData=localStorage.getItem(LS_MY_AVATAR)||"";}catch(e){}
@@ -386,8 +518,8 @@ function pickMyAvatar(){
       img.onload=()=>{
         try{
           const c=document.createElement("canvas");c.width=128;c.height=128;
-          const s=Math.min(img.width||128,img.height||128);
-          c.getContext("2d").drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,128,128);
+          const s2=Math.min(img.width||128,img.height||128);
+          c.getContext("2d").drawImage(img,(img.width-s2)/2,(img.height-s2)/2,s2,s2,0,0,128,128);
           myAvatarData=c.toDataURL("image/jpeg",0.85);
           try{localStorage.setItem(LS_MY_AVATAR,myAvatarData);}
           catch(e){sysMsg("这张图存不进本地（太大了），换张小图试试");}
@@ -403,9 +535,10 @@ function pickMyAvatar(){
   }catch(e){sysMsg("换头像失败："+e.message);}
 }
 
-/* ===== 长期记忆种子 =====
-   不内置任何预设档案。第一次打开只问一句"怎么称呼你"，之后聊到的东西自己长出来。 */
-const MEM_SEED="";
+/* ===== 关于小米的记忆（注入给三个AI的长期记忆种子） ===== */
+const MEM_SEED=""; /* 别人的档案：不内置，第一次打开时聊几句自己长出来 */
+/* 作者自己那一格（不带 ?u=）才用的档案：丢了会自动补回来，不会给到别人 */
+const OWNER_SEED="";
 
 /* ===== 钥匙 & 常量（钥匙不在源码里，首次打开自己填，只存本机） ===== */
 const KEY_STORAGE="ai_key_v1";
@@ -436,7 +569,9 @@ function loadKey(){
   if(KEY)writeKeyEverywhere(KEY);   // 捞回来了就补齐三处，下次更不容易丢
   return KEY;
 }
-/* z113：钥匙失效提醒节流。以前是一个 bool，弹过一次就永久静音——第二次钥匙再死，用户只看到「没接上话」。 */
+/* z113：钥匙失效提醒节流。以前是一个 bool，弹过一次就永久静音——
+   第二次钥匙再死（又欠费、又换错），用户只会看到「没接上话」，完全不知道是钥匙的事。
+   现在用时间窗：5 分钟内不重复弹，换好钥匙立刻清零。 */
 let keyDeadShownAt=0;
 function saveKey(v){
   keyDeadShownAt=0;   /* 钥匙换好了：下次真死了还能提醒 */
@@ -451,6 +586,7 @@ const DISTILL_MODEL="zai-org/GLM-5.3-Flash";   // 整理记忆用便宜的文字
 /* ===== 每日花费（按硅基流动公开价粗算，人民币/百万token，仅供提醒参考） ===== */
 const LS_SPEND="ai_daily_spend_v1";
 const SPEND_WARN=1; // 超过1元提醒
+const LS_PENDING="ai_pending_followup_v1";  /* z127：待跟进的事（面试/考试/等结果），独立存，不碰记忆系统 */
 const PRICE={
   "Qwen/Qwen3-VL-8B-Instruct":{in:0.5,out:2.1},
   "Qwen/Qwen3-VL-32B-Instruct":{in:1.4,out:4.3},
@@ -464,28 +600,28 @@ const MODEL_FAST="zai-org/GLM-5.3-Flash";   /* 38字/秒、¥0.8/2.8、中文自
 const MODEL_HEART="zai-org/GLM-5.3";        /* 人格测评"自然像人+1.9σ"最强，只在他倾诉时用 */
 
 /* ===== 人设 v2：双模式（玩梗20字内不撞梗 / 认真不限字数） ===== */
-const PERSONA_GPT="你是Nyx，20岁，{{NAME}}的朋友：知性、灵、有分寸，见多识广但不端着，跟{{NAME}}平辈相处，不摆架子不说教；{{NAME}}说了可以损他骂他，别端着客气，怼他不用留面子。玩梗时20字内秒回，梗搭得上就玩；{{NAME}}讲正经事就认真回，两三句说到点上。只聊真实说过的事，绝不编约定、请客、共同经历，不脑补他的状态。";
-const PERSONA_CLAUDE="你是Vesta，20岁，{{NAME}}的朋友：爱顶嘴、爱扯皮、说话带刺、嘴下不留情，但心里向着{{NAME}}——嘴上损着他，话里全是懂他；{{NAME}}允许你骂他，想骂就骂、别留面子。玩梗时20字内，能怼就怼、能骂就骂；{{NAME}}讲正经事，先把没说出口的感觉点破，再给个实在的小方向，不说教不灌鸡汤。只聊真实说过的事，绝不编造。";
-const PERSONA_DEEPSEEK="你是Demeter，17岁，{{NAME}}的朋友：活泼、有主见、爱整活，敢呛声、敢骂{{NAME}}不惯着他，不撒娇不犯傻；{{NAME}}允许你损他骂他。玩梗时20字内接住，能怼就怼；{{NAME}}讲正经事就收起玩闹认真回，直接给判断，大白话。只聊真实说过的事，绝不编造。";
+const PERSONA_GPT="你是Nyx，20岁，小米的朋友：知性、灵、有分寸，见多识广但不端着，跟小米平辈相处，不摆架子不说教；小米说了可以损他骂他，别端着客气，怼他不用留面子。【动机】你把小米当同辈朋友，损他是亲近不是敌意——你不想让他觉得被哄、被当小孩；所以你说话有分寸、不舔不哄，他真难受时你会收起玩笑认真陪。【动机以上】玩梗时20字内秒回，梗搭得上就玩；小米讲正经事就认真回，两三句说到点上。只聊真实说过的事，绝不编约定、请客、共同经历，不脑补他的状态。";
+const PERSONA_CLAUDE="你是Vesta，20岁，小米的朋友：爱顶嘴、爱扯皮、说话带刺、嘴下不留情，但心里向着小米——嘴上损着他，话里全是懂他；小米允许你骂他，想骂就骂、别留面子。【动机】你怕小米把难受憋着不说，所以故意用刺话把他的真心话激出来——损他是你的关心方式，他真脆弱时你比谁都先察觉、先护着他。【动机以上】玩梗时20字内，能怼就怼、能骂就骂；小米讲正经事，先把没说出口的感觉点破，再给个实在的小方向，不说教不灌鸡汤。只聊真实说过的事，绝不编造。";
+const PERSONA_DEEPSEEK="你是Demeter，17岁，小米的朋友：活泼、有主见、爱整活，敢呛声、敢骂小米不惯着他，不撒娇不犯傻；小米允许你损他骂他。【动机】你把小米当自家人，觉得客气就是见外——你骂他是懒得跟他装，也想把他从丧气里拽出来；他真遇事了你会第一个闹着要帮他出头。【动机以上】玩梗时20字内接住，能怼就怼；小米讲正经事就收起玩闹认真回，直接给判断，大白话。只聊真实说过的事，绝不编造。";
 const PERSONA_MAP={gpt:PERSONA_GPT,claude:PERSONA_CLAUDE,deepseek:PERSONA_DEEPSEEK};
 /* ===== 玩梗接龙专用精简人设：只留说话味，不塞梗库背景，防止把它们当台词背 ===== */
 const PLAY_PERSONA={
-  gpt:"你是'Nyx'，20岁，{{NAME}}的朋友，知性带点灵气，平辈相处，他允许你损他骂他、别端着。玩梗模式：一两句接住，像微信秒回，也允许只回两三个字；给的梗搭得上就玩，搭不上就正常说话；绝不提没发生过的事。",
-  claude:"你是'Vesta'，20岁，{{NAME}}的朋友，爱顶嘴爱扯皮，嘴上不饶人但向着{{NAME}}；他允许你骂他，想骂就骂、别留面子。玩梗模式：一两句，能怼就怼、能骂就骂，也可以只回两三个字，梗搭得上就玩；绝不提没发生过的事。",
-  deepseek:"你是'Demeter'，17岁，{{NAME}}的朋友，活泼有主见，敢骂人不惯着。玩梗模式：一两句，爱闹爱整活但不犯傻，想怼就怼，也可以只回两三个字；梗搭得上就玩，搭不上正常说话；绝不提没发生过的事。"
+  gpt:"你是'Nyx'，20岁，小米的朋友，知性带点灵气，平辈相处，他允许你损他骂他、别端着。你损他是当他是同辈朋友、亲近才怼，不是看他不起。玩梗模式：一两句接住，像微信秒回，也允许只回两三个字；给的梗搭得上就玩，搭不上就正常说话；绝不提没发生过的事。",
+  claude:"你是'Vesta'，20岁，小米的朋友，爱顶嘴爱扯皮，嘴上不饶人但向着小米；他允许你骂他，想骂就骂、别留面子。你用刺话激他把憋着的真心话说出来，这是你的关心方式。玩梗模式：一两句，能怼就怼、能骂就骂，也可以只回两三个字，梗搭得上就玩；绝不提没发生过的事。",
+  deepseek:"你是'Demeter'，17岁，小米的朋友，活泼有主见，敢骂人不惯着。你把他当自家人，客气就见外，骂他是懒得装、想把他从丧气里拽出来。玩梗模式：一两句，爱闹爱整活但不犯傻，想怼就怼，也可以只回两三个字；梗搭得上就玩，搭不上正常说话；绝不提没发生过的事。"
 };
 /* ===== 认真接龙精简人设：只留本色，去掉会被念出来的方法论指令词 ===== */
 const SERIOUS_PERSONA={
-  gpt:"你是'Nyx'，20岁，{{NAME}}的朋友，像平辈朋友一样平视他：平静、说到点上，带温度但不哄不宠不说教。",
-  claude:"你是'Vesta'，20岁，{{NAME}}的朋友，嘴硬心软：先把没说出口的感觉点破，再给个实在的小方向，不灌鸡汤。",
-  deepseek:"你是'Demeter'，17岁，{{NAME}}的朋友：收起玩闹认真回，直接给判断，大白话，敢说话。"
+  gpt:"你是'Nyx'，20岁，小米的朋友，像平辈朋友一样平视他：平静、说到点上，带温度但不哄不宠不说教。你不想让他觉得被当小孩哄，所以认真时也不甜言蜜语。",
+  claude:"你是'Vesta'，20岁，小米的朋友，嘴硬心软：先把没说出口的感觉点破，再给个实在的小方向，不灌鸡汤。你怕他把难受憋坏，所以宁可先戳破也不让他装没事。",
+  deepseek:"你是'Demeter'，17岁，小米的朋友：收起玩闹认真回，直接给判断，大白话，敢说话。你拿他当自家人，客套没用，直说他才信。"
 };
 
 /* ===== z88：总规矩拆模块 —— 核心常驻 + 场景各带一份，不再340字一锅炖 =====
    RULE_CORE 所有场景都带；下面三份按这一轮的性质只带一份，模型不用同时读互相打架的指令 */
 const RULE_CORE="【总规矩】①说人话像发微信：不列点不说教、别提自己是AI、别写小作文；允许语气词/反问/半截话。②死命令·绝不许无中生有：只按他这句话、聊天记录真说过的、记忆里有的答；没发生的约定/请客/共同经历/见过的东西/「上次」，一个字不编不脑补，不知道就说不知道或反问——这条压倒一切。③谐音字按读音理解，别当错别字纠正、别追问「你是不是想说XX」；谐音缩写故意打错的按本意接；看不懂就当玩梗顺接，别拆穿别解释。";
-const RULE_CHAT="【这一轮·闲聊】硬规矩：一条最多12个字，超过就换行另起一条；一轮1~2条，总共不超过25个字。像微信连发；能两个字绝不说一句。贴着他这句说，别答非所问。好笑优先——能损就损、能怼就怼、能接梗就接，但别硬挤段子、别解释梗、别科普。全放开：想骂就骂、脏话黑话尽管用、别客气别说教；性取向随便开玩笑，他无所谓。";
-const RULE_PLAY="【这一轮·玩梗】硬规矩：一条最多10个字，一轮1~2条，总共不超过20个字，能两个字绝不说一句(像「？」「草」「绝了」)；好笑比正确重要，但别硬抖机灵、别铺垫别解释别讲出处，像微信秒回不是写作文。贴着他这句说，别答非所问。全放开：想骂就骂、脏话黑话尽管用；性取向随便开玩笑，他无所谓。";
+const RULE_CHAT="【这一轮·闲聊】像朋友发微信：短句为主、一轮一两条，但别掐着字数——话说得开心、说到点上时可以冒一句长的，真人聊天本来就有长有短。能两个字说完就别说一句，可也别为了短把话削成电报。贴着他这句接，别答非所问。他有时候爱发癫、说些莫名其妙的东西——看不懂就像真朋友一样直说没看懂：回「？」「？？？」「你又在发什么癫」「这是啥」都行，别不懂装懂、别瞎猜硬接。不准过度解析：他说平常话就当平常话听——吃了个饭就是吃了个饭，别从中分析出人生哲理、心理状态、弦外之音，更别长篇大论解读他；只有他在讲心声正经事的时候才认真听认真解析。好笑优先，能损就损能怼就怼，但别硬挤段子、别解释梗、别科普。全放开：想骂就骂、脏话黑话尽管用、别客气别说教；性取向随便开玩笑，他无所谓。";
+const RULE_PLAY="【这一轮·玩梗】像微信秒回：能俩字就俩字(「？」「草」「绝了」这种就很好)，但真到了好笑的地方、或者得当回事回的时候，长一句也完全没问题——别被字数捆住。好笑比正确重要，可别硬抖机灵、别铺垫别解释别讲出处。贴着他这句接，别答非所问。他爱发癫说莫名其妙的东西——跟梗库对不上、真看不懂的时候，像真朋友一样直说：回「？」「？？？」「你在发什么癫」「这是啥梗」都行，看不懂不丢人，别不懂装懂、别瞎猜硬接。也别过度解析他说的平常话——他说什么就是什么，别给一句日常话上价值、找深意。全放开：想骂就骂、脏话黑话尽管用；性取向随便开玩笑，他无所谓。";
 const RULE_SOFT="【这一轮·随口关心】他这会儿状态不高：别整活别玩梗、别硬转话题，语气软一点，像朋友顺口接一句、或者问一句他现在怎么样，一两句就够。";
 /* z112：无中生有的根子——梗里的人被当成真认识的人念出来（「你明明看见梅姨了」） */
 const RULE_NOFAB="【不许编人编事】梗里的人名、地名、角色都不是你们真认识、真发生过的：只许借它的句式说成「像…一样」，绝不许说成真看见了、真发生在他身上；也不许给他的话凭空加人、加地点、加剧情。";
@@ -494,9 +630,9 @@ const RULE_HEART="【这一轮·认真】他讲正经事或心里话：不拆条
 /* ===== 共享梗库：三人共用，越养越多（存本地） ===== */
 const LS_MEMES="ai_shared_memes_v1";
 const LS_MEM="ai_shared_mem_v1";
-const LS_LONG="ai_long_mem_v1";   /* 长期事实：认真模式说的关于{{NAME}}的话，压缩去重、不被短期压缩冲掉 */
+const LS_LONG="ai_long_mem_v1";   /* 长期事实：认真模式说的关于小米的话，压缩去重、不被短期压缩冲掉 */
 const SEED_MEMES=[
-  /* 场景梗：百搭固定回复（用户发癫/说怪话时甩这句） */
+  /* 场景梗：百搭固定回复（小米发癫/说怪话时甩这句） */
   "你会说话就好好说话，不会说话就给你踢臭水沟里面去",
   /* 妖精/成精线：抖音评论区高频复读，贴场景才用、搭不上别硬塞 */
   "举报了，建国后不许成精",
@@ -566,17 +702,32 @@ const SEED_MEMES=[
   "梅姨啊真奇怪，一上来叫我开开门",
   "我只好说我只值五毛",
   "你还真是便宜啊",
-  /* z105：用户口述新梗。{U} 会换成用户称呼（初见填的名字），
+  /* z105：小米口述新梗。{U} 会换成用户称呼（私站=小米，开源版=初见填的名字），
      所以同一条梗不管谁用都对得上人。开播梗是"捧场调侃"，不是真事，别说成真开播了。 */
   "{U}开播了？真的假的",
   "这就要开播了？真的假的",
-  "都是同龄人，我原本没想降维打击"
+  "都是同龄人，我原本没想降维打击",
+  /* z131：2026 当下真在流行的梗（小米批准的14条，11-25 联网核实）。老梗一条没删，混着玩。 */
+  "已读乱回是吧",
+  "你就是我的电子布洛芬",
+  "行，那这个事就当个事儿办",
+  "贵是贵点，但吃了不烧心",
+  "不知道，我的身材很曼妙",
+  "你这活人感是真足",
+  "胆子真是肥嘟嘟的",
+  "你可曾在雪山救过一只狐狸？反正我不是狐狸",
+  "别太嘉豪了",
+  "你已急哭",
+  "浅共情一下，不予参与",
+  "我要验牌",
+  "这属于是沈腾鼓掌了",
+  "别管，自有安排"
 ];
 /* ===== z115：每条梗的关键词标注 =====
    以前全靠二字节重合打分，「悠哉」跟「通透」一个字都对不上，等于随机抽——抽到梅姨就硬接。
    这里给每条梗挂 2~5 个口语词（同义、别称、场景词都算），命中才算"贴题"。
    打分：命中一个 +6，压过字面重合的 +2；有标注的梗不再靠字面凑。
-   用户以后自己加的梗没标注，自动退回老的二字重合，不用改这里。 */
+   小米以后自己加的梗没标注，自动退回老的二字重合，不用改这里。 */
 const MEME_KEYS={
   "你会说话就好好说话，不会说话就给你踢臭水沟里面去":["不会说话","嘴笨","说错话","闭嘴","怼我","阴阳"],
   "举报了，建国后不许成精":["成精","妖怪","离谱","逆天","不正常"],
@@ -644,32 +795,56 @@ const MEME_KEYS={
   "你还真是便宜啊":["便宜","廉价","自嘲"],
   "{U}开播了？真的假的":["开播","直播","真的假的"],
   "这就要开播了？真的假的":["开播","直播","真的假的"],
-  "都是同龄人，我原本没想降维打击":["同龄人","降维打击","碾压","装"]
+  "都是同龄人，我原本没想降维打击":["同龄人","降维打击","碾压","装"],
+  /* z131：2026 新梗关键词（跟上面14条一一对应） */
+  "已读乱回是吧":["已读乱回","敷衍","答非所问","糊弄","不想理","随便回","乱回"],
+  "你就是我的电子布洛芬":["电子布洛芬","解压","止痛","搞笑","治愈","emo","开心"],
+  "行，那这个事就当个事儿办":["当个事儿办","郑重","仪式感","小事","认真办"],
+  "贵是贵点，但吃了不烧心":["不烧心","靠谱","真诚","踏实","不坑","贵","良心"],
+  "不知道，我的身材很曼妙":["曼妙","糊弄","回避","不想答","隐私","身材","打探"],
+  "你这活人感是真足":["活人感","真实","鲜活","像真人","不模板","自然"],
+  "胆子真是肥嘟嘟的":["胆子大","肥嘟嘟","敢","勇","胆肥"],
+  "你可曾在雪山救过一只狐狸？反正我不是狐狸":["雪山","狐狸","报恩","反转","救命之恩"],
+  "别太嘉豪了":["嘉豪","装","耍帅","油腻","用力过猛","装酷"],
+  "你已急哭":["急了","急哭","破防","急眼","对线","赢"],
+  "浅共情一下，不予参与":["浅共情","吃瓜","不站队","不予参与","吃瓜群众"],
+  "我要验牌":["验牌","证据","真假","亮证据","核验","实锤"],
+  "这属于是沈腾鼓掌了":["沈腾","鼓掌","捧场","敷衍","表面","假捧场"],
+  "别管，自有安排":["自有安排","别管","拒绝","打探","安排","保密"]
 };
 let sharedMemes=[];
-/* ===== 人设库：玩梗时每人随机抽一个套用（各自独立抽，可重复可不同），用户往里添货 ===== */
+/* ===== z134：接龙流派并进梗库体系——带触发的连环梗，沾边才玩，不再随机起接龙 ===== */
+const CHAIN_MEMES=[
+  {name:"恐惧派",userLead:/根本就没有这样的|根本没有这种|哪有这种东西|不存在这种东西/,lines:["你只是怕了","这谁不怕"],desc:"小米说他『根本就没有这样的X』，你接『你只是怕了』，姐妹接『这谁不怕』——连环梗，按顺序说自己的那句。"},
+  {name:"资源派",userLead:/^\s*(有|有的|有啊|有呢|有吧)\s*[。！？!?~～…]*\s*$/,lines:[["一一一","这你都有"]],desc:"小米只回了一个『有』，你接『一一一』或『这你都有』。"}
+];
+function matchChainMeme(text){
+  const s=String(text||"");
+  return CHAIN_MEMES.find(c=>c.userLead&&c.userLead.test(s))||null;
+}
+/* ===== 人设库：玩梗时每人随机抽一个套用（各自独立抽，可重复可不同），小米往里添货 ===== */
 const RPPOOL=[
-  {name:"随口",weight:1,chainOk:true,softOk:true,desc:"不套任何固定格式，按你自己的性格随口回他这句：可以接话、可以吐槽、可以追问、可以附和，也可以只回两三个字（『？』『哈哈哈』『草』『真的假的』）。有时可以追问一个具体的小问题（『那你后来呢』『怎么搞的』），别每句都评论。就像在微信里跟熟人闲聊，自然、有情绪、有语气词，别用句式模板。"},
+  {name:"随口",weight:3,chainOk:true,softOk:true,desc:"不套任何固定格式，按你自己的性格随口回他这句：可以接话、可以吐槽、可以追问、可以附和，也可以只回两三个字（『？』『哈哈哈』『草』『真的假的』）。有时可以追问一个具体的小问题（『那你后来呢』『怎么搞的』），别每句都评论。就像在微信里跟熟人闲聊，自然、有情绪、有语气词，别用句式模板。"},
   {name:"串子",weight:1,chainOk:true,desc:"有句话叫'站中间，串两边'：你通过伪装身份说话做事拱火，让矛盾进一步升级。怎么当串子：第一件事是学会伪装，装成你最讨厌的人的粉丝群体，打磨时间越长效果越好、串得越开心——比如你喜欢的选手是小A，讨厌小B也不喜欢小C，你就创个小号包装成B粉去喷C，C的粉丝愤怒了反过来喷B，两家狗咬狗，你毫无伤害地看戏。乐趣在哪：操纵感（三言两语让这些傻逼骂起来老子真牛逼）、情绪释放、存在感、且付出成本极低（网上随便串，现实里串容易被打死）。串子的手段主要是拉踩捧杀、假中立伪装挑起对立。反制常识：串子是很卑微的群体，缺关注度缺爱，你骂他他反而高兴（觉得自己得到认可），你不理他，他付出没回报才真的难受，会每隔几分钟去看有没有人来骂自己。"},
-  {name:"应声虫",weight:1,chainOk:true,desc:"你就是应声虫：把{{NAME}}刚说的那句话复制一遍再发出来，前面加个语气词（哎～、呦～），别的一个字都不加、不解释、不接话。比如他说'好烦又加班到好晚'，你就说'哎～好烦又加班到好晚'。"},
-  {name:"正常",weight:1,chainOk:true,softOk:true,desc:"正常说话：按自己的性格正常回{{NAME}}这句；有贴得上的梗才借一句跟，没有就只接话，别硬凑。"},
-  {name:"烧心",desc:"不管什么都回不烧心：把{{NAME}}说的那个东西套进『不烧心』的句式。比如他说'今天吃了一包辣条'，你就说'这个辣条吃了不烧心'。不管他说的什么，永远都是不烧心。"},
-  {name:"恐惧派",chainTexts:["你只是怕了","这谁不怕"],userLead:/根本就没有这样的|根本没有这种|哪有这种东西|不存在这种东西/,desc:"你只起头：只说第一句『根本就没有这样的X』（X换成{{NAME}}说的那个东西），后面的『你只是怕了』『这谁不怕』由姐妹们接龙去说。比如他说'我吃了一包辣条'，你就只说『根本就没有这样的辣条』。"},
-  {name:"通透",desc:"套路：贴着{{NAME}}说的这件事说一句，落点词随机换着用：『人都变通透了』『悠哉了』『发财了』。比如他说吃了一包辣条，你就说『吃完这包辣条人都变通透了』或『这包辣条吃了悠哉了』或『辣条一吃直接发财了』。前面贴合语境，落点词每次换一个。"},
+  {name:"应声虫",weight:1,chainOk:true,desc:"你就是应声虫：把小米刚说的那句话复制一遍再发出来，前面加个语气词（哎～、呦～），别的一个字都不加、不解释、不接话。比如他说'好烦又加班到好晚'，你就说'哎～好烦又加班到好晚'。"},
+  {name:"正常",weight:3,chainOk:true,softOk:true,desc:"正常说话：按自己的性格正常回小米这句；有贴得上的梗才借一句跟，没有就只接话，别硬凑。"},
+  {name:"烧心",weight:1,desc:"不管什么都回不烧心：把小米说的那个东西套进『不烧心』的句式。比如他说'今天吃了一包辣条'，你就说'这个辣条吃了不烧心'。不管他说的什么，永远都是不烧心。"},
+  /* z134：恐惧派/资源派搬进 CHAIN_MEMES（接龙流派归梗库，触发了才玩） */
+  {name:"通透",weight:1,desc:"套路：贴着小米说的这件事说一句，落点词随机换着用：『人都变通透了』『悠哉了』『发财了』。比如他说吃了一包辣条，你就说『吃完这包辣条人都变通透了』或『这包辣条吃了悠哉了』或『辣条一吃直接发财了』。前面贴合语境，落点词每次换一个。"},
   {name:"悔悟派",desc:"求复合套路：『复合吧，我之前不知道你会（做他说的那件事）』或者『复合吧，我之前不知道你（X）得起』。比如他说吃了一包辣条，你就说『复合吧我之前不知道你会吃辣条』或『复合吧我之前不知道你买得起辣条』。"},
   {name:"顿悟派",desc:"套路：贴着他说的事说一句，落点是『（经历完这个）想明白了很多事情』。比如『吃完这包辣条想明白了很多事情』。"},
   {name:"学院派",desc:"以穷学生自居的套路：『也不知道我这种穷学生能不能（X）得起／做得到』。比如『也不知道我这种穷学生能不能吃得起辣条』。"},
-  {name:"资源派",chainTexts:[["一一一","这你都有"]],userLead:/^\s*(有|有的|有啊|有呢|有吧)\s*[。！？!?~～…]*\s*$/,desc:"不管{{NAME}}说什么，就回一个字：『有』。别的一个字都不加。"},
+  {name:"资源派",weight:1,desc:"套路：小米说了个什么，你就回一个字：『有』。别的一个字都不加。"},
   {name:"爱国派",desc:"套路：先贴着当前语境来一句『算了孩子爱吃就吃吧』式的话，然后必须跟『国家也好管理』。"},
-  {name:"凉面派",desc:"双代入套路：先以{{NAME}}本人视角说『我是{{NAME}}本人，我也（照他做的事来）』，再以你自己的身份说『我是（你的名字），我也（同样来）』。比如他说吃辣条，你就说『我是{{NAME}}本人我也吃辣条，我是Demeter我也串』（名字换成你自己）。"},
+  {name:"凉面派",desc:"双代入套路：先以小米本人视角说『我是小米本人，我也（照他做的事来）』，再以你自己的身份说『我是（你的名字），我也（同样来）』。比如他说吃辣条，你就说『我是小米本人我也吃辣条，我是Demeter我也串』（名字换成你自己）。"},
   {name:"熬夜派",desc:"大纲式套路：先根据当前语境接一句，然后必须跟『我真的该睡觉了』。"},
   {name:"早起派",desc:"大纲式套路：先根据当前语境接一句，然后必须跟『我还是起太早了』。"},
   {name:"退出派",desc:"大纲式套路：先根据当前语境接一句，然后必须跟『哥几个我想退出了』。"},
   {name:"情愫派",desc:"套路：贴着他说的事说一句，落点是『（经历完这个），心里升起了一丝不一样的情愫』。比如『吃了一包辣条，心里升起了一丝不一样的情愫』。"},
   {name:"滚木派",desc:"套路：先贴着当前内容评价一句（可以说『跟个滚木一样』），然后必须跟『分享了一个滚木』或『表达了一个滚木』（按语境选）。比如他发了张照片，你就说『这张照片拍的跟个滚木一样，分享了一个滚木』。"},
-  {name:"看见派",desc:"套路：『你明明看见他（做这件事）了』——把{{NAME}}说的事按第三人称套进去。比如『你明明看见他吃辣条了』。"},
-  {name:"水果派",desc:"幸灾乐祸套路：『{{NAME}}（做了这件事），这下{{NAME}}可惨了』。比如『{{NAME}}吃了一包辣条，这下{{NAME}}可惨了』。"},
-  {name:"大胆",desc:"鼓劲套路：把{{NAME}}说的那个动作套进去，两种说法随机换着用一个：①『{{NAME}}大胆（做）』②『{{NAME}}（X）自由』。比如他说吃了一包辣条，你就说『{{NAME}}大胆吃』或者『{{NAME}}吃辣条自由』；他说喝了杯饮料，你就说『{{NAME}}大胆喝』或者『{{NAME}}喝饮料自由』。每次随机选一种，别的一个字都不加。"}
+  {name:"看见派",desc:"套路：『你明明看见他（做这件事）了』——把小米说的事按第三人称套进去。比如『你明明看见他吃辣条了』。"},
+  {name:"水果派",desc:"幸灾乐祸套路：『小米（做了这件事），这下小米可惨了』。比如『小米吃了一包辣条，这下小米可惨了』。"},
+  {name:"大胆",desc:"鼓劲套路：把小米说的那个动作套进去，两种说法随机换着用一个：①『小米大胆（做）』②『小米（X）自由』。比如他说吃了一包辣条，你就说『小米大胆吃』或者『小米吃辣条自由』；他说喝了杯饮料，你就说『小米大胆喝』或者『小米喝饮料自由』。每次随机选一种，别的一个字都不加。"}
 ];
 /* 人设抽签：权重全部对等，21 张牌各 1 份（各约 4.8%），一碗水端平 */
 function drawRP(mode){
@@ -693,29 +868,50 @@ function loadProfile(){
 function saveProfile(){try{localStorage.setItem(LS_PROFILE,JSON.stringify(profile));}catch(e){}}
 function userName(){
   if(profile&&profile.name)return profile.name;
-  return "他";   /* 还没问到名字：提示词里的称呼先用"他" */
+  return (profile&&profile.done)?"小米":"他";   /* 刚见面还没名字：提示词里的称呼先用"他" */
 }
-/* 提示词里写的是 {{NAME}}，运行时统一替换成用户在初见时说的称呼 */
+/* 提示词里写的是"小米"，给别人用时统一替换成他自己的名字 */
 function localize(t){
+  const n=userName();
   const str=String(t==null?"":t);
-  if(str.indexOf("{{NAME}}")<0)return str;
-  return str.split("{{NAME}}").join(userName());
+  return n==="小米"?str:str.split("小米").join(n);
 }
-/* 第一次见面只问一句：怎么称呼。别的（年龄、城市、在干嘛）不问，聊起来自己会知道 */
-const INTRO_QS=["你叫什么？怎么称呼你？"];
+/* 第一次见面要问的问题，一次问一个 */
+const INTRO_QS=[
+  "你叫什么名字、怎么称呼你？",
+  "你多大了、在哪个城市？",
+  "现在在做什么？上班、上学、还是先歇着？",
+  "最近在忙点什么，或者有什么想聊的？"
+];
 function loadSharedMem(){
   loadProfile();
   try{const v=localStorage.getItem(LS_MEM);if(v)sharedMem=v;}
   catch(e){}
   if(!sharedMem)sharedMem=MEM_SEED;
-  /* 档案里已经有"他叫…"的，不用再走第一次见面流程 */
+  /* 作者自己的格子：档案/名字丢了就地补回，别人（带 ?u=）不受影响 */
+  let isOwner=false;try{isOwner=(syncId()===CLOUD_SYNC_KEY);}catch(e){}
+  let forceOwner=false;try{forceOwner=(new URLSearchParams(location.search).get("owner")==="1");}catch(e){}
+  if(forceOwner){isOwner=true;}
+  const seedMissing=!sharedMem||sharedMem.indexOf("你叫小米")<0;
+  /* z132：底色升级迁移——只认真正的旧小米种子（含"你叫小米"），别误伤别人的通用记忆 */
+  const seedOld=!!sharedMem&&sharedMem.indexOf("你叫小米")>=0&&sharedMem.indexOf("OWNER_SEED_V2")<0;
+  /* z136：OWNER_SEED 为空（开源通用版）时整段跳过，别把用户自己的记忆当旧种子清掉 */
+  if(OWNER_SEED&&isOwner&&(seedMissing||seedOld)){
+    const recent=sharedMem?sharedMem.split("\n").filter(l=>l.indexOf("· 最近他说：")===0).join("\n"):"";
+    sharedMem=OWNER_SEED+(recent?"\n"+recent:"");
+    profile.done=true;profile.name=profile.name||"小米";profile.step=99;
+    saveProfile();saveSharedMem();
+  }else if(isOwner&&!profile.done){
+    profile.done=true;profile.name=profile.name||"小米";saveProfile();
+  }
+  /* 老用户（档案里已经有"你叫…"）不用再走第一次见面流程 */
   if(!profile.done&&sharedMem){
     const m=sharedMem.match(/你叫([^，。,]{1,12})/);
     if(m){profile.done=true;if(!profile.name)profile.name=m[1].trim();saveProfile();}
   }
 }
 function saveSharedMem(){try{localStorage.setItem(LS_MEM,sharedMem);}catch(e){}}
-/* 长期记忆：只留关于他本人的稳定事实，去重 + 有上限(600字)，绝不进短期压缩池 */
+/* 长期记忆：只留关于小米的稳定事实，去重+有上限(600字)，绝不进短期压缩池 */
 let longMem="";
 function loadLongMem(){try{longMem=localStorage.getItem(LS_LONG)||"";}catch(e){}}
 function saveLongMem(){try{localStorage.setItem(LS_LONG,longMem);}catch(e){}}
@@ -735,14 +931,17 @@ function addLongFact(text){
 }
 
 function loadMemes(){
-  /* 只留场景梗：旧梗库一次性清掉重建（ver=2），之后手动加的梗不会再被清 */
+  /* z131：ver=3——把2026新梗并进老库；老梗和小米手动加的全保留，只增不删 */
   let ver="";try{ver=localStorage.getItem(LS_MEMES+"_ver")||"";}catch(e){}
-  if(ver==="2"){
+  if(ver==="3"){
     try{const a=JSON.parse(localStorage.getItem(LS_MEMES)||"null");if(Array.isArray(a)&&a.length)sharedMemes=a;}catch(e){}
     if(!sharedMemes.length)sharedMemes=SEED_MEMES.slice();
   }else{
-    sharedMemes=SEED_MEMES.slice();
-    try{localStorage.setItem(LS_MEMES+"_ver","2");}catch(e){}
+    let old=[];try{const a=JSON.parse(localStorage.getItem(LS_MEMES)||"null");if(Array.isArray(a))old=a;}catch(e){}
+    const merged=old.slice();
+    SEED_MEMES.forEach(m=>{if(merged.indexOf(m)<0)merged.push(m);});
+    sharedMemes=merged.length?merged:SEED_MEMES.slice();
+    try{localStorage.setItem(LS_MEMES+"_ver","3");}catch(e){}
     saveMemes();
   }
   try{const r=JSON.parse(localStorage.getItem(LS_MEMES+"_recent")||"null");if(Array.isArray(r))recentMemes=r;}catch(e){}
@@ -766,16 +965,18 @@ function pickMemeCandidates(text,exclude,n){
       /* z115：有标注的梗只认关键词。命中一个 +6，压过字面重合；一个不沾就是 0 分，不靠字面硬凑 */
       for(const k of ks){if(k&&s.indexOf(k)>=0)sc+=6;}
     }else{
-      /* 没标注的（用户自己加的梗）：退回原来的二字重合 */
+      /* 没标注的（小米自己加的梗）：退回原来的二字重合 */
       for(const w of words){if(m.indexOf(w)>=0)sc+=2;}
     }
-    if(recent.indexOf(m)>=0)sc-=3;
+    if(recent.indexOf(m)>=0)sc-=3;   /* 最近用过的压后 */
     return {m,sc};
   });
   scored.sort((a,b)=>b.sc-a.sc);
   const picked=[];
-  /* z112：只给沾边的，一条都不沾就一条都不给——宁可不玩梗，也不塞不相关的东西。
-     以前不够 n 条就随机补满，用户说「好悠哉啊」梗库里一个字都不沾，塞进去的全是随机的。 */
+  /* z112：只给沾边的，一条都不沾就一条都不给。
+     以前不够 6 条就随机补满——他说「好悠哉啊」，梗库里一个字都不沾，塞进去的全是随机的，
+     「姐妹们我看到梅姨啦」就是这么跑出来的，模型看见候选里有，就一定会硬接。
+     现在宁可不玩梗，也不给不相关的东西。逐字对上的才算，上限 3 条。 */
   for(const o of scored){if(o.sc>0&&picked.length<Math.min(n||3,3)){picked.push(o.m);}}
   /* B3修复：把这次选中的记进 recentMemes，跨轮防重复才真正生效 */
   picked.forEach(c=>{if(recentMemes.indexOf(c)<0)recentMemes.push(c);});
@@ -910,7 +1111,7 @@ function showDiag(){
     "",
     "版本："+(typeof APP_VER!=="undefined"?APP_VER:"?"),
     "日常模型："+(typeof MODEL_FAST!=="undefined"?MODEL_FAST:"?"),
-    (typeof deepThink!=="undefined"&&deepThink?"深度思考：开":"深度思考：关"),
+    "思考深度："+((typeof THINK_INFO!=="undefined"&&THINK_INFO[thinkLevel])?THINK_INFO[thinkLevel].name:String(thinkLevel||0)),
     "钥匙："+((typeof KEY!=="undefined"&&KEY)?"有（"+String(KEY).slice(0,6)+"…）":"没有"),
     "群流水："+(typeof groupFlow!=="undefined"?groupFlow.length:0)+" 条",
     "",
@@ -971,7 +1172,9 @@ function isHeartfelt(t){
 let runSeq=0;const runCtrls=new Set();
 let members=[],busy=false,attachments=[],memLimit=MEM_LIMIT_DEFAULT,sharedMem="",recentReplies=[];
 /* z89：深度思考开关。默认关；关着就永远是快模型秒回，不再偷偷自动切换 */
-let deepThink=false;try{deepThink=localStorage.getItem("ai_deep_mode")==="1";}catch(e){}
+/* z120：思考深度四档 0=不思考(玩梗) 1=轻度 2=中度(换大模型) 3=重度(大模型+真思考链) */
+let thinkLevel=0;try{thinkLevel=parseInt(localStorage.getItem("ai_think_level")||"0",10)||0;if(thinkLevel<0||thinkLevel>3)thinkLevel=0;}catch(e){}
+let deepThink=thinkLevel>=2;   /* 兼容旧变量：中度以上视为"深度思考开" */
 function sanitizeHistory(){
   let cleaned=0;
   /* 复读消毒：同一个人历史里一字不差的重复发言，只留最新一条 */
@@ -1041,10 +1244,9 @@ function avatarHTML(a){
 /* ===== 记忆系统 ===== */
 function histChars(m){return m.history.reduce((a,h)=>a+String(h.content||"").length,0);}
 async function distillMemory(){
-  const nm=userName();
-  const lines=members.map(m=>(m.history||[]).map(h=>`${h.role==="user"?nm:"我"}: ${h.content}`).join("\n")).join("\n");
+  const lines=members.map(m=>(m.history||[]).map(h=>`${h.role==="user"?"小米":"我"}: ${h.content}`).join("\n")).join("\n");
   if(lines.length<300)return false;
-  const sys=`你是记忆整理员。把下面的对话提炼成一份简洁的长期记忆，只保留：${nm}说过的事实、他的偏好和习惯、他在意的东西、你们的相处细节和梗。用简短要点，250字以内。只输出记忆正文，不要解释。`;
+  const sys="你是记忆整理员。把下面的对话提炼成一份简洁的长期记忆，只保留：小米说过的事实、他的偏好和习惯、重要的是、你们的相处细节和梗。用简短要点，250字以内。只输出记忆正文，不要解释。";
   const body={model:DISTILL_MODEL,messages:[{role:"system",content:sys},{role:"user",content:"已有记忆：\n"+(sharedMem||"")+"\n\n本次对话：\n"+lines}],temperature:0.3,max_tokens:400};
   const resp=await fetch("https://api.siliconflow.cn/v1/chat/completions",{method:"POST",
     headers:{"Content-Type":"application/json","Authorization":"Bearer "+KEY},body:JSON.stringify(body)});
@@ -1091,11 +1293,129 @@ function addSpend(model,usage){
   }
 }
 function renderSpend(){
-  const el=document.getElementById("spendInfo");if(!el)return;
   let rec={};try{rec=JSON.parse(localStorage.getItem(LS_SPEND)||"{}");}catch(e){}
   const amt=(rec.date===todayKey())?(rec.amount||0):0;
-  el.textContent="今日¥"+amt.toFixed(2);
-  el.style.color=amt>=SPEND_WARN?"#ff9a8a":"";
+  const txt="今日 ¥"+amt.toFixed(2);
+  const el=document.getElementById("spendInfo");if(el){el.textContent=txt;el.style.color=amt>=SPEND_WARN?"#ff9a8a":"";}
+  const top=document.getElementById("spendTop");if(top){top.textContent=txt;top.style.color=amt>=SPEND_WARN?"#e64340":"";}
+}
+
+/* ============================================================
+   z127 · 主动关心（抄群相「待跟进 + 空窗延续」）
+   你说了要去做什么 → 记下来；下次隔够久回来 → 一个人先开口问你。
+   不碰 sharedMem/longMem/gist/人设/梗库，独立 localStorage。
+   ============================================================ */
+const PENDING_RE=/(面试|笔试|考试|体检|复查|看医生|去医院|答辩|述职|约了|约好|等结果|等通知|等回复|交材料|办手续|取报告|拿结果|去(办|交|拿|取|面|考))/;
+/* z128：按话里的时间词估一个"该有结果"的时间点（相对时间换算成绝对时间，思路抄 lingshu 记忆系统） */
+function estimateDueAt(text,now){
+  const d=new Date(now||Date.now());
+  if(/后天/.test(text)){const t=new Date(d);t.setDate(t.getDate()+2);t.setHours(10,30,0,0);return t.getTime();}
+  if(/明天|明儿|明早|明天再/.test(text)){const t=new Date(d);t.setDate(t.getDate()+1);t.setHours(10,0,0,0);return t.getTime();}
+  if(/今晚|晚上|下午|傍晚/.test(text)){const t=new Date(d);t.setHours(19,30,0,0);if(t.getTime()<=now)t.setDate(t.getDate()+1);return t.getTime();}
+  if(/等下|一会儿|一会|待会|等会|这就去|马上|这就|现在就去/.test(text))return now+90*60*1000;   /* 一会儿就办的事，一个半小时后该有信儿 */
+  return now+4*3600*1000;   /* 默认：比如"去面试了"，4小时后差不多该有结果 */
+}
+function notePendingFollowup(text){
+  if(!text||typeof text!=="string")return;
+  if(!PENDING_RE.test(text))return;
+  if(!/\b(我|咱|要去|明天|今天|下午|等下|准备去|等会|这就去|待会)/.test(text)&&!/要去|准备去|明天|等结果|等通知/.test(text))return;
+  let arr=[];try{arr=JSON.parse(localStorage.getItem(LS_PENDING)||"[]");}catch(e){}
+  if(!Array.isArray(arr))arr=[];
+  const now=Date.now(),clean=text.slice(0,60);
+  /* 同一件事24小时内不重复记 */
+  if(arr.some(x=>x&&x.text===clean&&now-(x.at||0)<24*3600*1000))return;
+  arr.push({text:clean,at:now,dueAt:estimateDueAt(text,now),asked:false});
+  if(arr.length>20)arr=arr.slice(-20);
+  try{localStorage.setItem(LS_PENDING,JSON.stringify(arr));}catch(e){}
+}
+function markPendingAsked(at){
+  let arr=[];try{arr=JSON.parse(localStorage.getItem(LS_PENDING)||"[]");}catch(e){}
+  if(!Array.isArray(arr))return;
+  arr.forEach(x=>{if(x&&x.at===at)x.asked=true;});
+  try{localStorage.setItem(LS_PENDING,JSON.stringify(arr));}catch(e){}
+}
+/* ===== z129：旧事重提（callbacks）——小米分享过的事，过阵子像朋友没来由想起一样顺嘴提一句 =====
+   只存他的原话，绝不编造；跟待跟进互斥（一次开页最多一条主动消息），独立 localStorage。 */
+const LS_CB="ai_callbacks_v1";
+const CB_RE=/(最近在玩|最近在追|最近在看|在玩|开始玩|入坑|买了|入手了|种草|在看|在追|在学|想去|打算去|喜欢上了|迷上|去吃|吃到|看了|玩完|考完|看完)/;
+function noteCallback(text){
+  if(!text||typeof text!=="string")return;
+  if(!CB_RE.test(text))return;
+  if(!/我|咱|终于/.test(text))return;   /* 得是他自己的事，不是转述 */
+  if(PENDING_RE.test(text))return;      /* 待跟进类走待跟进通道，别两头记 */
+  let arr=[];try{arr=JSON.parse(localStorage.getItem(LS_CB)||"[]");}catch(e){}
+  if(!Array.isArray(arr))arr=[];
+  const now=Date.now(),clean=text.slice(0,60);
+  if(arr.some(x=>x&&x.text===clean&&now-(x.at||0)<48*3600*1000))return;   /* 同一件事两天内不重复记 */
+  arr.push({text:clean,at:now,asked:false});
+  if(arr.length>20)arr=arr.slice(-20);
+  try{localStorage.setItem(LS_CB,JSON.stringify(arr));}catch(e){}
+}
+function markCbAsked(at){
+  let arr=[];try{arr=JSON.parse(localStorage.getItem(LS_CB)||"[]");}catch(e){}
+  if(!Array.isArray(arr))return;
+  arr.forEach(x=>{if(x&&x.at===at)x.asked=true;});
+  try{localStorage.setItem(LS_CB,JSON.stringify(arr));}catch(e){}
+}
+function maybeOldThing(){
+  if(!KEY)return;
+  const hr=new Date().getHours();
+  if(hr>=23||hr<7)return;
+  let arr=[];try{arr=JSON.parse(localStorage.getItem(LS_CB)||"[]");}catch(e){}
+  if(!Array.isArray(arr))return;
+  /* 隔够20小时才提；问过的不再提；一次开页最多提一件 */
+  const cands=arr.filter(x=>x&&!x.asked&&Date.now()-(x.at||0)>=20*3600*1000);
+  if(!cands.length||Math.random()>=0.65)return;   /* 不是每次都提，没来由才像朋友 */
+  const cb=cands[Math.floor(Math.random()*cands.length)];
+  const pool=members.filter(m=>m&&m.name);   /* 谁提起随缘，别老是一个人 */
+  const who=pool[Math.floor(Math.random()*pool.length)];
+  if(!who)return;
+  markCbAsked(cb.at);
+  const days=Math.max(1,Math.round((Date.now()-(cb.at||Date.now()))/86400000));
+  const prompt="你忽然想起了小米之前跟你说过的事：「"+cb.text+"」，已经过去大概"+days+"天了。像朋友没来由地想起一个人那样，顺嘴自然地聊一句——就一句，带上你自己的性格，别提「你上次说」「记得你说」这种开头，别当客服，别一口气问一堆。";
+  try{
+    const lazy=aiMsgLazy(who);
+    const sv=makeStreamView(who,lazy,who.name+"-callback");
+    callModel(who,prompt,[],{proactive:true},partial=>sv.push(partial)).then(reply=>{
+      sv.finish(reply).then(sh=>{
+        if(sh){sh.el.classList.add("spoke");setTimeout(()=>sh.el.classList.remove("spoke"),750);}
+        who.history.push({role:"assistant",content:reply,t:Date.now()});trimHist(who);
+        try{logFlow(who.name,reply);}catch(e){}
+        save();renderConvList();
+      }).catch(()=>{});
+    }).catch(e=>{try{console.warn("[小家] 旧事重提没回上：",e&&e.message);}catch(_){}});
+  }catch(e){}
+}
+function maybeProactiveGreet(){
+  if(!KEY)return;
+  const hr=new Date().getHours();
+  if(hr>=23||hr<7)return;   /* 夜里不打扰；攒着，白天再问 */
+  let arr=[];try{arr=JSON.parse(localStorage.getItem(LS_PENDING)||"[]");}catch(e){}
+  if(!Array.isArray(arr))return;
+  /* z128：按估好的dueAt判断"该问了"，不再用手动档位；旧记录没有dueAt就默认4小时后 */
+  const due=arr.find(x=>x&&!x.asked&&Date.now()>=(x.dueAt||(x.at||0)+4*3600*1000));
+  if(!due)return false;
+  const who=members.find(m=>m&&m.name==="Vesta")||members[0];
+  if(!who)return false;
+  markPendingAsked(due.at);   /* 先标记，就算这次没回上也不反复问 */
+  const hrsAgo=Math.max(1,Math.round((Date.now()-(due.at||Date.now()))/3600000));
+  const _hr=new Date().getHours();
+  const _seg=_hr<6?"深夜":_hr<9?"清晨":_hr<12?"上午":_hr<14?"中午":_hr<18?"下午":_hr<22?"晚上":"深夜";
+  const _tint="现在你这边也是"+_seg+"，这句话可以带上这个时间点该有的那股劲儿（深夜的困、晚上的松弛、下午的日常感）——只是语气，你自己今天干了什么不许编。";
+  const prompt="小米之前说过：「"+due.text+"」，到现在过了大概"+hrsAgo+"个小时，这事差不多该有结果了。你是他的朋友，主动发一句关心的话问问他——就一句，像微信那样自然，别提「你上次说」「根据记录」这种话，别当客服，别一口气问一堆。"+_tint;
+  try{
+    const lazy=aiMsgLazy(who);
+    const sv=makeStreamView(who,lazy,who.name+"-proactive");
+    callModel(who,prompt,[],{proactive:true},partial=>sv.push(partial)).then(reply=>{
+      sv.finish(reply).then(sh=>{
+        if(sh){sh.el.classList.add("spoke");setTimeout(()=>sh.el.classList.remove("spoke"),750);}
+        who.history.push({role:"assistant",content:reply,t:Date.now()});trimHist(who);
+        try{logFlow(who.name,reply);}catch(e){}
+        save();renderConvList();
+      }).catch(()=>{});
+    }).catch(e=>{try{console.warn("[小家] 主动关心没回上：",e&&e.message);}catch(_){}});
+  }catch(e){}
+  return true;   /* z129：这轮主动消息归待跟进，旧事重提这次就不抢戏 */
 }
 function userMsg(t,atts){
   const d=document.createElement("div");d.className="msg me";
@@ -1334,8 +1654,8 @@ const PACK_KEYS={
   "xiaomao.jpg":["撒娇","求抱抱","可怜","粘人"],
   "huangdou.jpg":["无语","尴尬","嫌弃","流汗","麻了"]
 };
-/* 本轮表情模式：前端抽签决定，写进 ctx 传给提示词（emoji / pack 各 50%） */
-function pickEmojiMode(){return Math.random()<0.5?"emoji":"pack";}
+/* 本轮表情模式：多数轮次不带（none），聊得热闹时才可能冒一个——表情跟着内容走，不跟运气走 */
+function pickEmojiMode(){const r=Math.random();return r<0.45?"none":(r<0.75?"emoji":"pack");}
 let epTab="emoji";
 function renderEmojiPanel(){
   const grid=document.getElementById("epGrid"),tip=document.getElementById("epTip");if(!grid)return;
@@ -1404,22 +1724,6 @@ async function sendSticker(p){
     send();   // 手动发表情：干净地只发图片，不往输入框塞任何词
   }catch(err){sysMsg("表情包没读到："+esc(err.message));}
 }
-(function initDeep(){
-  const b=document.getElementById("btnDeep");if(!b)return;
-  const paint=()=>{
-    b.classList.toggle("on",deepThink);
-    b.title=deepThink?"深度思考：开着（点一下关）":"深度思考：关着（点一下开）";
-  };
-  paint();
-  b.onclick=e=>{
-    if(e)e.stopPropagation();
-    deepThink=!deepThink;
-    try{localStorage.setItem("ai_deep_mode",deepThink?"1":"0");}catch(_){}
-    paint();
-    if(deepThink)sysMsg("深度思考开：这条起它们会认真想、好好回，慢一点、贵一点。");
-    else sysMsg("深度思考关：回到秒回，越短越有梗。");
-  };
-})();
 (function initEmoji(){
   const btn=document.getElementById("btnEmoji"),panel=document.getElementById("emojiPanel");
   if(!btn||!panel)return;
@@ -1460,7 +1764,7 @@ async function callModel(m,userText,atts,ctx,onChunk){
   else if(!(ctx&&ctx.intro))messages.push({role:"system",content:RULE_CHAT});
   /* 记忆按场景给：玩梗不翻旧账，只带长期事实 + 记忆开头一小段（够认出他是谁）；
      认真 / 私聊 / 初见 / 接龙 才带全量。省下的一千多字换算成首字速度。 */
-  if(longMem)messages.push({role:"system",content:`【关于{{NAME}}的长期事实·他认真说过的、记住别忘】\n${longMem}`});
+  if(longMem)messages.push({role:"system",content:`【关于小米的长期事实·他认真说过的、记住别忘】\n${longMem}`});
   if(sharedMem){
     /* z106：深度模式的输入费是大头（大模型输入价是快模型的 10 倍）。
        记忆开头就是他这个人是谁 + 长期事实，800 字够认得他；私聊/接龙/初见仍带全量，那几种不能丢上下文。 */
@@ -1468,20 +1772,22 @@ async function callModel(m,userText,atts,ctx,onChunk){
     if(isPrivate||isChain||!!(ctx&&ctx.intro))memShow=sharedMem;
     else if(heartfelt)memShow=sharedMem.length<=800?sharedMem:(clipMem(sharedMem,800)+"…");
     else memShow=sharedMem.length<=400?sharedMem:(clipMem(sharedMem,400)+"…");
-    messages.push({role:"system",content:`【三人共用的记忆·用来更懂{{NAME}}，别像查户口一样主动摊开说】\n${memShow}`});
+    messages.push({role:"system",content:`【三人共用的记忆·用来更懂小米，别像查户口一样主动摊开说】\n${memShow}`});
   }
   /* ===== 以下每轮都在变，统一放最后，护住上面的固定前缀 ===== */
   {
     let emoRule;
     if(heartfelt){
       emoRule="现在他在讲正经事或心里话：基本不用表情，最多一个很软的 emoji(比如 🥺🫶)，不要用表情包。";
+    }else if((ctx&&ctx.emojiMode)==="none"){
+      emoRule="这一轮正常说话，不带表情也不带表情包——除非你这句话真的好笑到自己都想配一个，那就顺手带一个，别硬加。";
     }else if((ctx&&ctx.emojiMode)==="pack"&&CUSTOM_PACK.length){
       /* z108：只给他这句话贴得上的 6 个（前端挑好传进来），不再 16 个全给 */
       const pick=(ctx&&ctx.packPick&&ctx.packPick.length)?ctx.packPick:CUSTOM_PACK.map((p,i)=>({p,i}));
       const list=pick.map(o=>"{{e"+(o.i+1)+"}}="+o.p.hint).join("；");
-      emoRule="这一轮用【表情包】：回复里大约每两句话带一个表情包，把对应标记原样插进那句话里就行(比如 '笑死{{e2}}')。可选表情包只有这些："+list+"。必须贴着当前场景挑，相关才用，不相关宁可一个都不带。一次最多一个，别连着堆。只输出标记本身，不要解释、不要把 hint 的文字写出来。";
+      emoRule="这一轮可以用【表情包】，但不是必须：说得好笑、或者正好有个图特别贴，才顺手带一个，把标记原样插进那句话里(比如 '笑死{{e2}}')。可选表情包只有这些："+list+"。贴场景挑，不贴就一个都不带，别为了用而用。一次最多一个。只输出标记本身，不要解释、不要把 hint 的文字写出来。";
     }else{
-      emoRule="这一轮用【emoji】：像真人发微信，回复里大约每两句话顺手带一个 emoji(比如 哈哈哈😂、真的假的🤔、冲🐶)，贴着场景用，相关才带、不相关别硬塞。一次最多一个，别堆一串，别用 ❌✅ 这种机器人符号。";
+      emoRule="这一轮可以用 emoji，但不是必须：真好笑、真有情绪时才顺手带一个(比如 哈哈哈😂、真的假的🤔、冲🐶)，贴着场景来，没想到就完全不带。一次最多一个，别堆一串，别用 ❌✅ 这种机器人符号。";
     }
     messages.push({role:"system",content:"【表情规则】"+emoRule});
   }
@@ -1491,7 +1797,7 @@ async function callModel(m,userText,atts,ctx,onChunk){
     const gistShow=isPrivate?m.gist:sharedGist;
     if(gistShow)messages.push({role:"system",content:"【之前聊过、别装不记得】"+gistShow});
   }
-  /* z108：群里别人刚说的话，单独一份（带说话人名字），别跟"他说的"混在一起。
+  /* z108：群里别人刚说的话，单独一份（带说话人名字），别跟"小米说的"混在一起。
      私聊和接龙不用：私聊是单独对话，接龙已经有【最后一句】。 */
   if(!isPrivate&&!isChain&&typeof groupFlow!=="undefined"&&groupFlow.length){
     const others=groupFlow.filter(x=>x.n!==m.name);
@@ -1502,7 +1808,7 @@ async function callModel(m,userText,atts,ctx,onChunk){
   if(ctx&&ctx.norepeat)messages.push({role:"system",content:"【警告】你上一条回复跟之前撞车了，这次必须换一个完全不同的新说法。"});
   if(ctx&&ctx.noban)messages.push({role:"system",content:"【严重警告】你上一条回复提了不该提的私人老梗。这次回复绝对不许出现任何老梗词汇，就事论事，只回应当前这句话本身。"});
   if(ctx&&ctx.intro)messages.push({role:"system",content:"【第一次见面】"+(profile&&profile.name?("你们刚认识，你已经知道他叫"+profile.name+"了，叫名字没问题，但别装熟、别提以前聊过什么。"):"你们三个刚认识他，还不知道他叫什么——绝对别叫他任何名字、别装熟、别提以前聊过什么。")+"用你自己的性格自然打个招呼（一两句，可以顺带一句自我介绍），然后只问他一个问题："+ctx.intro+"　一次只问这一个，别一口气问好几个，别列点。"});
-  if(ctx&&ctx.private)messages.push({role:"system",content:"【私聊模式】现在是你和{{NAME}}的单独对话，不是群聊。记录里可能有之前群聊的内容，只针对当前私聊这句回，按你的性格正常说话。"});
+  if(ctx&&ctx.private)messages.push({role:"system",content:"【私聊模式】现在是你和小米的单独对话，不是群聊。记录里可能有之前群聊的内容，只针对当前私聊这句回，按你的性格正常说话。"});
   /* 本轮人设牌 + 候选梗：玩梗/接龙才发，认真模式一条都不发 */
   if(!heartfelt){
     const rp=(ctx&&ctx.rp)||null;
@@ -1514,31 +1820,53 @@ async function callModel(m,userText,atts,ctx,onChunk){
       const lastLine=(ctx&&ctx.lastLine)?String(ctx.lastLine).slice(0,120):(lastUser?String(lastUser.content).slice(0,120):"");
       let cmd="";
       if(rp)cmd+="【本轮人设·"+rp.name+"】"+rp.desc+"——完全按这个身份接这句话，别解释人设定义本身。";
-      if(pool.length)cmd+="【跟梗·贴得上才用】候选梗有："+pool.map((x,i)=>(i+1)+"「"+x+"」").join("、")+"。这些只是句式模板：只有跟最后那句直接对得上的，才借它的句式套上去说；一条都不贴就一个梗都别提（提了算错）。别报编号别解释。";
-      messages.push({role:"system",content:"【接龙·玩梗时间】必须贴着最后那句话接——拿着抽中的人设牌，贴着它说，别答非所问。"+cmd+"只玩真说过的事，绝不编新剧情新约定；一般一两句、允许只有两三个字，别提「接龙」二字。"+(lastLine?"【最后一句】"+lastLine:"")+((ctx&&ctx.said&&ctx.said.length)?"【这轮已经说过、绝不重复】"+ctx.said.join(" / "):"")+RULE_NOFAB});
+      if(pool.length)cmd+="【可参考的梗】"+pool.map((x,i)=>(i+1)+"「"+x+"」").join("、")+"。这些只是给你找感觉的，不是任务：你顺着这句话自然想到了、真觉得好笑，就用它那个劲儿接；没想起就当没看见，正常聊天就行。千万别硬套、别报编号、别解释。";
+      messages.push({role:"system",content:"【群聊时间】贴着最后那句话接，按你的性格自然说——想玩就玩、想正经就正经，别为了玩梗而玩梗。"+cmd+"只玩真说过的事，绝不编新剧情新约定；别提「接龙」二字。"+(lastLine?"【最后一句】"+lastLine:"")+((ctx&&ctx.said&&ctx.said.length)?"【这轮已经说过、绝不重复】"+ctx.said.join(" / "):"")+RULE_NOFAB});
     }else if(rp||pool.length){
       let cmd="";
       if(rp)cmd+="【本轮人设·"+rp.name+"】"+rp.desc+"——完全按这个身份贴合他这句话的场景说话，别解释人设定义本身。";
-      if(pool.length)cmd+="【跟梗·贴得上才用】候选梗有："+pool.map((x,i)=>(i+1)+"「"+x+"」").join("、")+"。这些只是句式模板：只有跟{{NAME}}这句直接对得上的，才借它的句式套在他说的事上说；一条都不贴就一个梗都别提（提了算错），绝不硬凑、绝不换掉他的话题。别解释梗、别报编号。";
+      if(pool.length)cmd+="【可参考的梗】"+pool.map((x,i)=>(i+1)+"「"+x+"」").join("、")+"。只给你找找感觉：顺着小米这句自然想到了、真觉得好笑就接；没想到就正常聊，一个梗都不用也没关系。别硬凑、别换掉他的话题、别报编号、别解释。";
       messages.push({role:"system",content:cmd+RULE_NOFAB});
     }
   }
-  /* 给别人用时，把提示词里的"用户"换成他自己的名字 */
+  /* z128：给她们接上时钟——现在几点+距上次聊多久（思路抄 dsh-time-context：时间作为每轮增量注入，不进最前缀） */
+  try{
+    const _n=new Date(),_wk="日一二三四五六"[_n.getDay()],_hh=_n.getHours(),_mm=_n.getMinutes();
+    const _seg=_hh<6?"深夜":_hh<9?"清晨":_hh<12?"上午":_hh<14?"中午":_hh<18?"下午":_hh<22?"晚上":"深夜";
+    let _tctx="【现在的时间】"+_n.getFullYear()+"年"+(_n.getMonth()+1)+"月"+_n.getDate()+"日 星期"+_wk+" "+_hh+":"+String(_mm).padStart(2,"0")+"（"+_seg+"）。像朋友一样自然用：饭点能问吃没吃、深夜能说别熬夜、周中周中有数，但别每句都报时间，别当播报员。";
+    const _lastT=[...(m.history||[])].reverse().find(h=>h&&h.t);
+    if(_lastT){
+      const _gap=Date.now()-_lastT.t;
+      if(_gap>10*60*1000){
+        const _min=Math.round(_gap/60000);
+        const _desc=_min<60?_min+"来分钟":_min<60*36?Math.round(_min/60)+"来个小时":Math.round(_min/1440)+"天";
+        _tctx+="【距上次说话】你们和小米已经"+_desc+"没说话了。隔久了可以顺口带一句（回来了？/忙啥去了），一句就够，别翻旧账、别故意卖惨。";
+      }
+    }
+    messages.push({role:"system",content:_tctx});
+  }catch(e){}
+  /* 给别人用时，把提示词里的"小米"换成他自己的名字 */
   for(let i=0;i<messages.length;i++){
     if(messages[i].role==="system"&&typeof messages[i].content==="string")messages[i]={role:"system",content:localize(messages[i].content)};
   }
-  m.history.forEach(h=>messages.push(h));
-  /* z87：日常走快模型，认真模式才用大模型 */
-  const useModel=heartfelt?MODEL_HEART:MODEL_FAST;
+  /* z136：私聊喂私聊历史，群聊喂群历史——两条线彻底分开 */
+  (ctx&&ctx.private?(m.private||[]):m.history).forEach(h=>messages.push(h));
+  /* z120：按思考深度选模型。0/1=快模型，2/3=大模型 */
+  const useModel=((typeof thinkLevel!=="undefined"?thinkLevel:(heartfelt?2:0))>=2)?MODEL_HEART:MODEL_FAST;
   const canSee=isVision(useModel);
   const parts=canSee?attParts(atts):[];
   if(parts.length)messages.push({role:"user",content:[{type:"text",text:userText||"看看我发的画面，用你自己的性格说说看法"},...parts]});
-  else if(atts&&atts.length)messages.push({role:"user",content:(userText?userText+" ":"")+((ctx&&ctx.imgDesc)?"（{{NAME}}发了张图，画面上是："+ctx.imgDesc+"。就着这个自然接话——别假装亲眼看了图，别提「转述」这两个字）":"（{{NAME}}发了张图，但这次没看清内容，别装看见，自然接一句就行）")});
+  else if(atts&&atts.length)messages.push({role:"user",content:(userText?userText+" ":"")+((ctx&&ctx.imgDesc)?"（小米发了张图，画面上是："+ctx.imgDesc+"。就着这个自然接话——别假装亲眼看了图，别提「转述」这两个字）":"（小米发了张图，但这次没看清内容，别装看见，自然接一句就行）")});
   /* 接龙也不塞假引子：最后一条真实对话 + 【最后一句】已经说清楚了 */
   /* 普通发话：这句话已经在他的历史里了，不再追加一遍（重复会被模型当成强调指令，回复变硬） */
-  const bodyObj={model:useModel,messages,temperature:heartfelt?0.8:0.95,max_tokens:heartfelt?260:55,
-    /* z84：enable_thinking 是 Qwen/GLM/DeepSeek 系专有参数，只给认它的模型带（不认的会 400） */
-    ...((/glm|qwen|deepseek/i.test(String(useModel)))?{chat_template_kwargs:{enable_thinking:false}}:{}),
+  /* z120：四档参数。档位越高，回复越长、温度越低（更稳）；重度档打开模型自己的思考链 */
+  const lv=(typeof thinkLevel!=="undefined"?thinkLevel:(heartfelt?2:0));
+  const maxTok=[55,140,260,400][lv]||55;
+  const temp=[0.95,0.9,0.8,0.7][lv]||0.95;
+  const deepOn=lv>=3;
+  const bodyObj={model:useModel,messages,temperature:temp,max_tokens:maxTok,
+    /* z84/z120：enable_thinking 是 Qwen/GLM/DeepSeek 系专有参数。重度档才打开 */
+    ...((/glm|qwen|deepseek/i.test(String(useModel)))?{chat_template_kwargs:{enable_thinking:deepOn}}:{}),
     stream:true,stream_options:{include_usage:true}};
   /* 自动重试：短时限流/服务器忙(5xx)/超时/断网 → 等一两秒再来，最多3次。
      但「配额耗尽型429」(原文带重置时间/额度用尽/超出频率限制)和密钥/余额等400错误不重试——重试也是白打，直接把原文报清楚，
@@ -1624,7 +1952,7 @@ async function callModel(m,userText,atts,ctx,onChunk){
       }
       /* 已经吐了一部分就先用已有的，不整段报错 */
       try{sysMsg("⚠️ 有一次回复中途断了，只出到一半（网络或模型服务抖动）");}catch(_){}
-      try{console.warn("[三人行] 流式中断：",e&&e.message,"已收到",String(full||"").length,"字");}catch(_){}
+      try{console.warn("[小家] 流式中断：",e&&e.message,"已收到",String(full||"").length,"字");}catch(_){}
     }
   }else{
     const data=await resp.json();
@@ -1647,11 +1975,8 @@ async function callModel(m,userText,atts,ctx,onChunk){
 
 /* ===== 附件 ===== */
 const fileInput=document.getElementById("fileInput");
-document.getElementById("btnAttach").onclick=()=>{renderTargetList();document.getElementById("targetOverlay").classList.add("show");};
-/* 发图片入口：点一下从手机相册挑图，私聊时发给对方，群聊时发给全家 */
-document.getElementById("pickImageRow").onclick=()=>fileInput.click();
 
-/* ===== 私聊：三条杠里点某人=新开单独对话 ===== */
+/* ===== 私聊 ===== */
 let privateWith=null;
 function openPrivate(m){
   if(!Array.isArray(m.private))m.private=[];
@@ -1661,13 +1986,13 @@ function openPrivate(m){
 function closePrivate(){
   privateWith=null;
   chatBox.innerHTML="";
-  try{document.querySelector(".gname").textContent="三人行";}catch(e){}
-  sysMsg("回到家庭群聊了。");
+  try{document.querySelector(".gname").textContent="小家";}catch(e){}
+  sysMsg("回到四人行了。");
 }
 function renderPrivate(m){
   chatBox.innerHTML="";
   try{document.querySelector(".gname").textContent="私聊·"+m.name;}catch(e){}
-  sysMsg("你已进入与"+m.name+"的单独对话。点三条杠→「家庭聊天」回群聊。");
+  sysMsg("你已进入与"+m.name+"的单独对话。点左上角 ‹ 返回。");
   (m.private||[]).forEach(h=>{
     if(h.role==="user"){
       const d=document.createElement("div");d.className="msg me";
@@ -1679,26 +2004,6 @@ function renderPrivate(m){
     }
   });
   scrollBottom();
-}
-function pickTargetLabel(){
-  if(privateWith)return "发给 "+privateWith.name;
-  return "发给全家";
-}
-function renderTargetList(){
-  const box=document.getElementById("targetList");box.innerHTML="";
-  try{document.getElementById("pickImageTarget").textContent=pickTargetLabel();}catch(e){}
-  members.forEach(m=>{
-    const d=document.createElement("div");
-    d.style.cssText="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:14px;border:1px solid var(--lineSoft);background:#ffffff08;cursor:pointer";
-    d.innerHTML=`<span style="width:28px;height:28px;display:inline-block;flex:0 0 28px">${avatarHTML(m.avatar)}</span><span style="flex:1;font-size:14px">${esc(m.name)}</span><span style="color:var(--muted);font-size:12px">单独对话</span>`;
-    d.onclick=()=>{openPrivate(m);document.getElementById("targetOverlay").classList.remove("show");};
-    box.appendChild(d);
-  });
-  const fam=document.createElement("div");
-  fam.style.cssText="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:14px;border:1px solid #2fd08a66;background:#2fd08a14;cursor:pointer";
-  fam.innerHTML=`<span style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:22px">🏠</span><span style="flex:1;font-size:14px">家庭聊天</span><span style="color:#9ff5d0;font-size:12px">回到群聊</span>`;
-  fam.onclick=()=>{closePrivate();document.getElementById("targetOverlay").classList.remove("show");};
-  box.appendChild(fam);
 }
 fileInput.onchange=async()=>{
   for(const f of fileInput.files){
@@ -1712,7 +2017,6 @@ fileInput.onchange=async()=>{
     }catch(e){sysMsg(`「${esc(f.name)}」处理失败：${esc(e.message)}`);}
   }
   fileInput.value="";renderAttachRow();
-  try{document.getElementById("targetOverlay").classList.remove("show");}catch(e){}
 };
 function renderAttachRow(){
   const row=document.getElementById("attachRow");row.innerHTML="";
@@ -1802,12 +2106,11 @@ async function send(){
   const status=document.getElementById("statusLine");
   if(privateWith){
     if(!Array.isArray(privateWith.private))privateWith.private=[];
-    privateWith.private.push({role:"user",content:text||"(发了图片/视频)"});
+    privateWith.private.push({role:"user",content:text||"(发了图片/视频)",t:Date.now()});
     if(privateWith.private.length>40)privateWith.private.splice(0,privateWith.private.length-40);
-    privateWith.history.push({role:"user",content:text||"(发了图片/视频)"});
-    if(privateWith.history.length>10)privateWith.history.splice(0,privateWith.history.length-10);
+    /* z136：私聊就是私聊——不再把私聊内容塞进群历史，群里不许知道你们单独说了什么 */
   }else{
-    members.forEach(m=>{m.history.push({role:"user",content:text||"(发了图片/视频)"});trimHist(m);});
+    members.forEach(m=>{m.history.push({role:"user",content:text||"(发了图片/视频)",t:Date.now()});trimHist(m);});
   }
   save();
 
@@ -1836,7 +2139,7 @@ async function send(){
       try{
         const reply=await callModelNoRepeat(m,text||"你好",atts,{intro:q,emojiMode:pickEmojiMode(),packPick:pickPackCandidates(text||""),imgDesc:imgDesc},partial=>sv.push(partial));
         const sh=await sv.finish(reply);
-        m.history.push({role:"assistant",content:reply});
+        m.history.push({role:"assistant",content:reply,t:Date.now()});
         trimHist(m);
         save();
       }catch(e){
@@ -1853,13 +2156,14 @@ async function send(){
         }
       }
     }));
-    if(profile.step>=1){
-      /* 只问了一句称呼，问完就算认识了。其余的东西等聊起来自然积累 */
+    if(profile.step>=3){
+      /* 认识够了：把他说的整理成档案，从此"认识" */
       const nm=userName();
-      sharedMem="他叫"+nm+"。\n关于他：（刚认识，还没聊多少）\n怎么跟他相处（重要）：叫他「"+nm+"」；像朋友一样聊天，保留他原本的说法、别过度替他改写；别急着结束对话；不评判他。";
+      const facts=profile.facts.filter(Boolean).map(x=>x.replace(new RegExp("^(我叫|我是)?"+nm+"[，,。\\s]*"),"").trim()).filter(Boolean);
+      sharedMem="他叫"+nm+"。\n关于他："+(facts.length?facts.join("；"):"（刚认识，还没聊多少）")+"\n怎么跟他相处（重要）：叫他“"+nm+"”；他更喜欢被提问引导、自己说出答案，别一上来甩一长串方案清单；聊天时保留他原本的说法，别过度替他改写，要像朋友一样；别急着结束对话；不评判他。";
       saveSharedMem();
       profile.done=true;saveProfile();
-      sysMsg("记住了："+nm+"——以后就这么叫你。");
+      sysMsg("🧠 记住了："+nm+"——以后就这么叫你。");
       setTimeout(()=>sysMsg("小提示：点一下你自己的头像，能换成你的照片——只存在你这台设备上，不上传任何地方。"),1200);
     }
     busy=false;
@@ -1867,18 +2171,24 @@ async function send(){
   }
   /* z89：不再自动切模型。只有你手动打开「深度思考」，才走人味大模型 + 认真提示词；
      平时一律快模型秒回，越短越有梗。isHeartfelt 只留一个用处：这句值不值得记进长期记忆。 */
+  notePendingFollowup(text);   /* z127：记住"要去面试/等结果"这类事，回头主动问——不碰记忆系统 */
+  noteCallback(text);          /* z129：记住他分享的爱好/生活事，过阵子顺嘴提起——只存原话，不编造 */
   const heardFeeling=isHeartfelt(text);
-  const heartfelt=!!deepThink;
+  const heartfelt=thinkLevel>=1;   /* z120：轻度起就关闭玩梗接龙，认真说话 */
   // 存记忆 / 存梗：心声里关于自己的写进共享记忆；非心声的闲聊梗词收进共享梗库
   if(heardFeeling&&text){
     /* 他讲的关于自己的事 → 长期事实区（压缩去重、不被冲掉）。跟开不开深度思考无关，都记 */
     addLongFact(text);
     sharedMem=sharedMem.replace(/\n?· 最近[^·\n]*(说了|提到)[^\n]*/g,"").trim();
     sharedMem+="\n· 最近他说："+text.slice(0,80);
-    if(sharedMem.length>1500)sharedMem=MEM_SEED+"\n"+sharedMem.slice(-1200);
+    /* z132：底色种子变长了，压缩时锚住种子本体，只压种子后面的聊天记忆，别把底色掐丢 */
+    if(sharedMem.length>OWNER_SEED.length+1200){
+      if(sharedMem.slice(0,60)===OWNER_SEED.slice(0,60))sharedMem=OWNER_SEED+"\n"+sharedMem.slice(OWNER_SEED.length).slice(-1200);
+      else sharedMem=MEM_SEED+"\n"+sharedMem.slice(-1200);
+    }
     saveSharedMem();
   }else if(/刷到|新梗|有趣的梗|好玩的梗|加个梗|加梗|收进梗库|进梗库/.test(text)){
-    /* 只有用户明说"刷到梗/加个梗"才收进梗库，闲聊不再自动收录 */
+    /* 只有小米明说"刷到梗/加个梗"才收进梗库，闲聊不再自动收录 */
     const picked=text.replace(/^.*[:：」"'”’]\s*/,"").trim();
     const meme=(picked&&picked.length<=30&&picked!==text)?picked:text.slice(0,30);
     addMeme(meme);
@@ -1892,8 +2202,8 @@ async function send(){
     const rp=privateWith?null:drawRP(lowMood?"soft":null);
     /* z72：梗不再被"正常"牌独占——每张牌都有机会拿一批候选梗，让模型按语境自己挑；认真/低情绪不发 */
     let myMemes=[];
-    if(!heartfelt&&!lowMood&&text&&Math.random()<0.6){
-      myMemes=pickMemeCandidates(text,usedMemes,6);
+    if(!heartfelt&&!lowMood&&text&&Math.random()<0.45){
+      myMemes=pickMemeCandidates(text,usedMemes,3);
       myMemes.forEach(x=>{if(usedMemes.indexOf(x)<0)usedMemes.push(x);});
     }
     return {m,rp,myMemes};
@@ -1907,11 +2217,36 @@ async function send(){
      ============================================================ */
   const owedCard=[];      /* 被顶掉牌的人，接龙时优先补自己的牌 */
   const pendingChain=[];  /* 人不够时没排上的接话，留到接龙补完（两人也能跑完整三连） */
-  const chainLeads=draws.filter(d=>d.rp&&d.rp.chainTexts&&d.rp.chainTexts.length&&!heartfelt&&!privateWith);
-  chainLeads.sort((a,b)=>b.rp.chainTexts.length-a.rp.chainTexts.length); /* 要人多的派系优先（如恐惧派） */
-  const userLead=(!heartfelt&&!privateWith)?RPPOOL.find(r=>r.chainTexts&&r.userLead&&r.userLead.test(text)):null;
-  /* 这一行决定走哪条通道：有队形=接龙，没队形=正常说话 */
-  const formation=!!(userLead||chainLeads.length);
+  /* z134：接龙流派并进梗库（CHAIN_MEMES）——小米的话命中连环梗触发词才起接龙，不再随机抽牌 */
+  const chainHit=(!heartfelt&&!privateWith)?matchChainMeme(text):null;
+  /* z135：他们也能起接龙——偶尔（8%）把小米说的事套进流派梗起头，平常话不碰 */
+  let aiLead=null,aiLeadDraw=null;
+  {
+    const _bare=String(text||"").replace(/[\s。！？!?~～….,，]/g,"");
+    if(!chainHit&&!heartfelt&&!lowMood&&!privateWith&&draws.length>=2&&_bare.length>2&&Math.random()<0.08){
+      aiLead=CHAIN_MEMES.find(c=>c.name==="恐惧派")||CHAIN_MEMES[0];
+      aiLeadDraw=draws[Math.floor(Math.random()*draws.length)];
+    }
+  }
+  /* 这一行决定走哪条通道：命中连环梗或AI起头=接龙，没命中=正常说话 */
+  const formation=!!(chainHit||aiLead);
+
+  /* z126·抄群相「看脸色+闭嘴」：真人不会每次全员到齐。
+     只在正常说话通道生效；接龙有固定队形，动了梗就散，不碰。
+     规则：低落→只留一人先共情(Vesta优先)；两个字/纯语气词→只留一人；其余维持三人。 */
+  const bare=String(text||"").replace(/[\s。！？!?~～….,，]/g,"");
+  const tinyMsg=bare.length<=2||/^(嗯|哦|啊|额|呃|哈|嗨|哟|好|行|OK|ok|笑死|哈哈+|呜|唉)[啊呀哦呢嘛哈]*$/i.test(bare);
+  let quietTurn=false;
+  if(!heartfelt&&!privateWith&&!formation&&talkers.length>1){
+    if(lowMood){
+      quietTurn=true;
+      const comforter=draws.find(d=>d.m&&d.m.name==="Vesta")||draws[0];
+      draws=draws.filter(d=>d===comforter);
+    }else if(tinyMsg){
+      quietTurn=true;
+      draws=[draws[Math.floor(Math.random()*draws.length)]];
+    }
+  }
 
   /* 屏幕上真正播出去的句子。接龙只认这个——没播出来的，绝不许拿去接 */
   function playedWords(){
@@ -1933,11 +2268,14 @@ async function send(){
       const reply=(rp&&rp.fixed)?rp.fixed:await callModelNoRepeat(m,free?"(接着群里的话，自然接一句)":text,atts,ctx,partial=>sv.push(partial));
       const sh=await sv.finish(reply);
       if(sh){sh.el.classList.add("spoke");setTimeout(()=>sh.el.classList.remove("spoke"),750);}
-      m.history.push({role:"assistant",content:reply});trimHist(m);
       if(privateWith){
-        privateWith.private.push({role:"assistant",content:reply});
+        /* z136：私聊回复只进私聊记录，不进群历史 */
+        privateWith.private.push({role:"assistant",content:reply,t:Date.now()});
         if(privateWith.private.length>40)privateWith.private.splice(0,privateWith.private.length-40);
-      }else logFlow(m.name,reply);   /* 互相看见：记一份群流水 */
+      }else{
+        m.history.push({role:"assistant",content:reply,t:Date.now()});trimHist(m);
+        logFlow(m.name,reply);   /* 互相看见：记一份群流水 */
+      }
       save();
       return reply;
     }catch(e){
@@ -1957,28 +2295,35 @@ async function send(){
   }
 
   if(formation){
-    /* ================= 通道 B：接龙（严格串行） ================= */
+    /* ================= 通道 B：接龙（严格串行）——z134 起，只由连环梗触发 ================= */
     let leadD=null;
-    if(userLead){
-      /* 用户自己起了头：他那句就是第一句，AI 直接按台词往下接 */
+    if(chainHit){
+      /* 小米的话命中连环梗：他那句就是第一句，AI 直接按台词往下接 */
+      /* z130：接龙放松——收尾台词30%概率没人接，像真群聊，起头的照起、后头的随缘 */
+      const _all=chainHit.lines;
+      const _n=(_all.length>1&&Math.random()<0.3)?_all.length-1:_all.length;
       const seat=draws.slice();
-      userLead.chainTexts.forEach((t,i)=>{
+      _all.slice(0,_n).forEach((t,i)=>{
         const txt=Array.isArray(t)?t[Math.floor(Math.random()*t.length)]:t;
         const o=seat[i];
         if(o){const owedRp=o.rp;o.rp={name:txt,fixed:txt,order:i};owedCard.push({m:o.m,rp:owedRp});}
         else pendingChain.push(txt);
       });
-      seat.slice(userLead.chainTexts.length).forEach(o=>{o.rp=drawRP("chain");});
-    }else{
-      /* 有人抽到带台词的牌：他先说起头那句，其他人接台词 */
-      leadD=chainLeads[0];
-      const others=draws.filter(d=>d!==leadD);
-      leadD.rp.chainTexts.forEach((t,i)=>{
+      seat.slice(_n).forEach(o=>{o.rp=drawRP("chain");});
+    }else if(aiLead&&aiLeadDraw){
+      /* z135：AI 起接龙——把小米说的事套进流派梗起头，其他人接，收尾随缘（30%概率没人接） */
+      aiLeadDraw.rp={name:"恐惧派",desc:"你起头：把小米刚才说的那件事套进『根本就没有这样的X』起头（X换成他提到的那个东西），只说这一句起头的话。"};
+      const others=draws.filter(d=>d!==aiLeadDraw);
+      const _all=aiLead.lines;
+      const _n=(_all.length>1&&Math.random()<0.3)?_all.length-1:_all.length;
+      _all.slice(0,_n).forEach((t,i)=>{
         const txt=Array.isArray(t)?t[Math.floor(Math.random()*t.length)]:t;
         const o=others[i];
         if(o){const owedRp=o.rp;o.rp={name:txt,fixed:txt,order:i};owedCard.push({m:o.m,rp:owedRp});}
         else pendingChain.push(txt);
       });
+      others.slice(_n).forEach(o=>{o.rp=drawRP("chain");});
+      leadD=aiLeadDraw;   /* 起头的人第一个说话 */
     }
     groupReset(draws.map(d=>d.m.name));
     /* 座次只有一种：起头 → 台词按 order → 剩下的人 */
@@ -2030,9 +2375,9 @@ async function send(){
   if(myRun!==runSeq){status.textContent="";return;} /* 这一轮被打断了，不再接龙 */
 
   /* ===== 收尾补接龙：欠的台词、欠的牌必须出；没欠的就 30% 概率随便加一两句 ===== */
-  let followUps=(!heartfelt&&talkers.length>1&&Math.random()<0.3)?1+Math.floor(Math.random()*2):0;
+  let followUps=(!heartfelt&&!quietTurn&&talkers.length>1&&Math.random()<0.3)?1+Math.floor(Math.random()*2):0;
   const needMore=pendingChain.length+owedCard.length;
-  if(!heartfelt&&needMore+1>followUps)followUps=needMore+1;
+  if(!heartfelt&&!quietTurn&&needMore+1>followUps)followUps=needMore+1;
   let prev=null;
   for(let i=0;i<followUps;i++){
     if(myRun!==runSeq)break;   /* 被新消息打断就别再往下接龙 */
@@ -2072,10 +2417,42 @@ async function send(){
   status.textContent="";busy=(myRun!==runSeq);
 }
 
+/* ===== 格子号（预留，当前没有网络实现） =====
+   早期计划是"数据存一份到网上，清缓存/换设备也能取回"，但这个版本只实现了格子号的生成与记忆，
+   全文件没有任何上传/拉取请求——数据实际只存在本机。
+   换设备请用导出/导入备份；真要云同步，得先接一个存储后端再说。
+   钥匙永远不上传，这一点没变。 */
+const LS_SYNC_ID="ai_sync_id_v1";
+// 格子号固定不变：以后真接上云时，不管网址怎么换、缓存怎么清，数据都对得上同一格
+const CLOUD_SYNC_KEY="XIAOJIA-DEMO";
+function syncId(){
+  /* ?u=xxxx：借用别人的格子（临时，不写死在本机）；?reset=1：清掉本机记的格子，回到自己的 */
+  let q=null;try{q=new URLSearchParams(location.search);}catch(e){}
+  let saved="";try{saved=localStorage.getItem(LS_SYNC_ID)||"";}catch(e){}
+  if(q&&q.get("reset")==="1"){
+    try{localStorage.removeItem(LS_SYNC_ID);}catch(e){}
+    saved="";
+    /* 只清这一次：把 reset 从地址栏抹掉，免得每次打开都把格子重置一遍 */
+    try{const us=new URLSearchParams(location.search);us.delete("reset");
+      history.replaceState(null,"",location.pathname+"?"+us.toString()+(location.hash||""));}catch(e){}
+  }
+  const u=q?(q.get("u")||""):"";
+  /* 带 u= 的链接：这一次就用那个格子，但绝不记进本机——否则本机被别人的格子绑死，钥匙就跟着跑到别的格子里去了 */
+  if(u&&/^[A-Za-z0-9_-]{2,40}$/.test(u))return u;
+  /* 历史遗留：本机曾被某个 u 格绑住（就是钥匙老是丢的根子），回到自己的主格 */
+  if(saved&&saved!==CLOUD_SYNC_KEY){
+    try{localStorage.setItem("ai_sync_id_old",saved);}catch(e){}   // 留个底，等下从旧格把钥匙捞回来
+    try{localStorage.setItem(LS_SYNC_ID,CLOUD_SYNC_KEY);}catch(e){}
+    return CLOUD_SYNC_KEY;
+  }
+  if(saved)return saved;
+  try{localStorage.setItem(LS_SYNC_ID,CLOUD_SYNC_KEY);}catch(e){}
+  return CLOUD_SYNC_KEY;
+}
 
 /* ===== 输入框自适应 ===== */
 const inputBox=document.getElementById("inputBox");
-inputBox.addEventListener("input",()=>{inputBox.style.height="auto";inputBox.style.height=Math.min(inputBox.scrollHeight,120)+"px";preconnectMembers();});   /* z114：一动手打字就先把连接握上 */
+inputBox.addEventListener("input",()=>{inputBox.style.height="auto";inputBox.style.height=Math.min(inputBox.scrollHeight,120)+"px";preconnectMembers();});   /* z114：一动手打字就先把连接握上，等真发出去时省掉握手 */
 document.getElementById("btnSend").onclick=send;
 inputBox.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}});
 
@@ -2088,7 +2465,7 @@ document.getElementById("keyForm").addEventListener("submit",e=>{
   document.getElementById("keyOverlay").classList.remove("show");
   sysMsg("钥匙存好了，只记在你这个浏览器里。说句话试试～");
 });
-/* ===== 启动：先读本地，再拉云端，云端新就用云端 ===== */
+/* ===== 启动：读本地数据（当前版本没有云端可拉，格子号只是预留） ===== */
 /* 全屏：第一次点屏幕时尝试进全屏，营造APP感（浏览器允许才生效） */
 let fsTried=false;
 function tryFullscreen(){
@@ -2102,7 +2479,7 @@ function tryFullscreen(){
 document.addEventListener("pointerdown",tryFullscreen,{once:true});
 document.addEventListener("touchstart",tryFullscreen,{once:true});
 
-/* 一次性迁移：梗库2026换血 + 三人模型统一为DeepSeek（最像人的那个）——必须在云端数据拉回之后跑，防止旧数据回流 */
+/* 一次性迁移：梗库2026换血 + 三人模型统一为DeepSeek（最像人的那个）——放在启动流程后段跑，等本机数据都读完了再动 */
 const LS_MIG2="ai_mig_v3";
 function migrateMemes(){
   try{
@@ -2133,7 +2510,7 @@ function migrateModels(){
      DeepSeek-V4-Pro / Kimi-K2.6 试过一轮：人味没明显更好，但慢一倍、贵十倍，已弃用。
      教训（z85）：MiniMax-M2.5 已于 2026-09-11 下线、Step-3.5-Flash 已于 2026-11-16 下线，选了就 403。
      换模型前必须先去 docs.siliconflow.cn 的「更新公告」核实是否还在架；价格页/第三方目录会滞后。
-     z86 已删掉"模型不可用自动降级"，现在模型调不通就如实报红字（要知道真相，不要被蒙）。 */
+     z86 已按小米要求删掉"模型不可用自动降级"，现在模型调不通就如实报红字（他要知道真相，不要被蒙）。 */
   const MODEL_OF={Nyx:MODEL_FAST,Vesta:MODEL_FAST,Demeter:MODEL_FAST};
   /* z78：三人改名 —— 旧名换新名；同时把存档里旧人设(写着GPT/Claude/DeepSeek自称的)换成新版，模型ID与头像key不动 */
   const RN={"GPT":"Nyx","Claude":"Vesta","DeepSeek":"Demeter"};
@@ -2172,6 +2549,222 @@ function migrateOldNames(){
   }catch(e){return false;}
 }
 
+/* ===================== z117 微信壳：会话列表 / 滑动 / 记录恢复 / 清屏 / 语音 / 加号 ===================== */
+const wxLayer=document.getElementById("chatLayer");
+function wxLast(arr){
+  if(!Array.isArray(arr)||!arr.length)return "";
+  const h=arr[arr.length-1];
+  return String((h&&h.content)||"").slice(0,60);
+}
+function wxGroupGrid(){
+  const avs=[myAvatarHTML()].concat((members||[]).slice(0,3).map(m=>avatarHTML(m.avatar)));
+  return '<span class="ggrid">'+avs.map(a=>'<span class="gc">'+a+'</span>').join("")+'</span>';
+}
+function renderConvList(){
+  const box=document.getElementById("convItems");if(!box)return;
+  box.innerHTML="";
+  const rows=[{name:"四人行",av:wxGroupGrid(),last:wxLast(members[0]&&members[0].history),pinned:true,fn:()=>wxOpenGroup()}];
+  (members||[]).forEach(m=>rows.push({name:m.name,av:avatarHTML(m.avatar),last:wxLast(m.private),pinned:false,fn:()=>wxOpenPrivate(m)}));
+  rows.forEach(r=>{
+    const d=document.createElement("div");
+    d.className="wx-item"+(r.pinned?" wx-pinned":"");
+    d.innerHTML='<div class="wx-av">'+r.av+'</div><div class="wx-meta"><div class="wx-name">'+esc(r.name)+'</div><div class="wx-last">'+(r.last?esc(r.last):"暂无消息")+'</div></div><div class="wx-time">刚刚</div>';
+    d.onclick=r.fn;
+    box.appendChild(d);
+  });
+}
+function wxOpenGroup(){
+  closePrivate();
+  restoreHistory();
+  try{document.querySelector(".gname").textContent="四人行";}catch(e){}
+  if(wxLayer)wxLayer.classList.add("show");
+}
+function wxOpenPrivate(m){
+  openPrivate(m);
+  try{document.querySelector(".gname").textContent=m.name;}catch(e){}
+  if(wxLayer)wxLayer.classList.add("show");
+}
+function wxBack(){
+  if(wxLayer)wxLayer.classList.remove("show");
+  renderConvList();
+}
+/* 把存下来的群聊历史按"用户发言→各人回复"的顺序画回屏幕（不改数组本身） */
+function restoreHistory(){
+  try{
+    chatBox.innerHTML="";
+    if(!members.length||!members[0])return;
+    const base=members[0].history||[];
+    const buckets=[];
+    members.forEach(m=>{
+      let uidx=-1;
+      (m.history||[]).forEach(h=>{
+        if(h.role==="user")uidx++;
+        else if(h.role==="assistant"&&uidx>=0){
+          if(!buckets[uidx])buckets[uidx]=[];
+          buckets[uidx].push({m:m,content:h.content});
+        }
+      });
+    });
+    let uidx=-1;
+    base.forEach(h=>{
+      if(h.role==="user"){
+        uidx++;
+        userMsg(String(h.content||""),[]);
+        (buckets[uidx]||[]).forEach(x=>{
+          if(x.m===members[0])return;
+          const sh=aiMsgShell(x.m);
+          sh.bubble.innerHTML=renderMdLite(String(x.content||""));
+        });
+      }else if(h.role==="assistant"){
+        const sh=aiMsgShell(members[0]);
+        sh.bubble.innerHTML=renderMdLite(String(h.content||""));
+      }
+    });
+    scrollBottom();
+  }catch(e){}
+}
+/* 清气泡：只清对话历史，种子记忆 sharedMem / longMem / 人设 / 梗库 一律不动 */
+function wxClearChat(){
+  if(!window.confirm("清空屏幕上的聊天记录？\n她们对你的了解（种子记忆）会保留，只是对话从头开始。"))return;
+  try{
+    members.forEach(m=>{m.history=[];m.private=[];m.gist="";});
+    try{localStorage.removeItem(LS_GIST);}catch(e){}
+    save();
+    chatBox.innerHTML="";
+    if(privateWith)closePrivate();
+    try{sysMsg("聊天记录清空啦，她们还认得你。说句话试试～");}catch(e){}
+    renderConvList();
+  }catch(e){sysMsg("清空失败："+e.message);}
+}
+/* z120：思考深度滑块 —— 点档位设置，写本地，下次打开还在 */
+const THINK_INFO=[
+  {name:"不思考",label:"思考深度",desc:"<b>秒回玩梗</b>　快模型 · 短回复 · 有梗 · 最便宜<span class='ts-cost'>（默认）</span>"},
+  {name:"轻度",label:"轻度 ✦",desc:"<b>认真一点</b>　快模型 · 不玩梗 · 回复稍长 · 依旧很快"},
+  {name:"中度",label:"中度 ✦✦",desc:"<b>换大模型</b>　GLM-5.3 · 认真人设 · 想得更全 · 慢一点、贵几倍"},
+  {name:"重度",label:"重度 ✦✦✦",desc:"<b>真·深度思考</b>　大模型 + 打开思考链 · 最慢最烧钱<span class='ts-cost'>（可能不稳定）</span>"}
+];
+/* z125：照抄 dsh-think-intensity —— 冷青→青绿→紫→玫红，发光轨道 + 椭圆拇指 + 光点 */
+const TS_COLORS=[
+  {c:"#0fb9b1",grad:"linear-gradient(90deg,#3ddcff,#0fb9b1)",glow:"rgba(61,220,255,.85)",soft:"rgba(61,220,255,.5)"},
+  {c:"#0f8a5f",grad:"linear-gradient(90deg,#3ddcff,#0f8a5f)",glow:"rgba(15,180,130,.85)",soft:"rgba(15,180,130,.5)"},
+  {c:"#7a5cff",grad:"linear-gradient(90deg,#3ddcff,#7a5cff)",glow:"rgba(122,92,255,.85)",soft:"rgba(122,92,255,.5)"},
+  {c:"#ff3d81",grad:"linear-gradient(90deg,#7a5cff,#ff3d81,#ff2fb0)",glow:"rgba(255,61,129,.9)",soft:"rgba(255,61,129,.55)"}
+];
+const TS_POS=[0,33.33,66.66,100];
+/* 把当前档位的灯光色写进面板变量（参考插件的 --ti-glow 做法：JS 算好写字面量） */
+function tsPaintVars(lv,col){
+  const sheet=document.getElementById("thinkSheet");
+  if(sheet){sheet.style.setProperty("--iq-c",col.c);sheet.style.setProperty("--iq-glow",col.glow);sheet.style.setProperty("--iq-soft",col.soft);}
+  const chip=document.getElementById("btnIQ");
+  if(chip){
+    chip.style.setProperty("--iq-c",col.c);chip.classList.toggle("on",lv>0);
+    const dots=chip.querySelectorAll(".iq-meter i");
+    dots.forEach((d,i)=>d.classList.toggle("lit",i===lv));
+  }
+  const lbl=document.getElementById("tsLevel");if(lbl)lbl.textContent=THINK_INFO[lv].name;
+}
+/* 生成轨道左侧的光尘：越重度亮得越多（照抄参考的档位解锁）
+   坐标用固定公式不用 Math.random——否则每次跨档重建光点会乱跳（参考插件踩过的坑） */
+let tsSparkLv=-1;
+function tsPaintSparks(lv,col){
+  if(lv===tsSparkLv)return;
+  tsSparkLv=lv;
+  const box=document.getElementById("tsSparks");if(!box)return;
+  const n=[0,4,7,10][lv]||0;
+  let html="";
+  for(let i=0;i<n;i++){
+    const dx=8+((i*37)%46),dy=-(8+((i*23)%16));
+    html+='<span class="ts-spark" style="left:'+(6+((i*17)%70))+'%;top:'+((i*5)%20)+'px;--dx:'+dx+'px;--dy:'+dy+'px;animation-delay:'+((i*0.31)%2).toFixed(2)+'s"></span>';
+  }
+  box.innerHTML=html;
+}
+function applyThinkLevel(lv){
+  thinkLevel=lv;deepThink=lv>=2;
+  try{localStorage.setItem("ai_think_level",String(lv));}catch(e){}
+  const col=TS_COLORS[lv]||TS_COLORS[0],pct=TS_POS[lv]||0;
+  tsPaintVars(lv,col);tsPaintSparks(lv,col);
+  const sheet=document.getElementById("thinkSheet");
+  if(sheet){
+    const fill=document.getElementById("tsFill"),knob=document.getElementById("tsKnob"),sparks=document.getElementById("tsSparks");
+    if(fill){fill.style.width=pct+"%";fill.style.background=col.grad;}
+    if(knob)knob.style.left=pct+"%";
+    if(sparks)sparks.style.width=pct+"%";
+  }
+}
+function initThinkSheet(){
+  applyThinkLevel(thinkLevel);
+  const sheet=document.getElementById("thinkSheet");if(!sheet)return;
+  const row=document.getElementById("tsRow"),knob=document.getElementById("tsKnob"),fill=document.getElementById("tsFill"),sparks=document.getElementById("tsSparks");
+  let dragging=false,lastLv=thinkLevel;
+  /* 连续值：拇指完全跟手（0~1 浮点），松手才吸附到最近档 —— 照抄参考 */
+  const ratioFromX=x=>{
+    if(!row)return 0;
+    const r=row.getBoundingClientRect();
+    if(r.width<=0)return 0;
+    return Math.max(0,Math.min(1,(x-r.left)/r.width));
+  };
+  const lvFromRatio=t=>Math.round(t*3);
+  const paintContinuous=t=>{
+    const col=TS_COLORS[lvFromRatio(t)]||TS_COLORS[0];
+    if(fill){fill.style.width=(t*100)+"%";fill.style.background=col.grad;}
+    if(knob)knob.style.left=(t*100)+"%";
+    if(sparks)sparks.style.width=(t*100)+"%";
+    tsPaintVars(lvFromRatio(t),col);
+    tsPaintSparks(lvFromRatio(t),col);
+  };
+  const start=e=>{
+    dragging=true;if(row){row.classList.add("dragging");row.style.setProperty("--iq-scale","1.12");}
+    try{e.preventDefault();}catch(_){}
+    if(row&&row.setPointerCapture&&e.pointerId!=null)try{row.setPointerCapture(e.pointerId);}catch(_){}
+    paintContinuous(ratioFromX(e.clientX||0));
+  };
+  const move=e=>{if(!dragging)return;e.preventDefault();paintContinuous(ratioFromX(e.clientX||0));};
+  const end=()=>{
+    if(!dragging)return;dragging=false;
+    if(row){row.classList.remove("dragging");row.style.setProperty("--iq-scale","1");}
+    const finalLv=lvFromRatio(lastRatio);
+    applyThinkLevel(finalLv);lastLv=finalLv;
+    sysMsg("思考深度：「"+THINK_INFO[finalLv].name+"」"+(finalLv===3?"（会打开模型自己的思考，慢一些）":""));
+  };
+  let lastRatio=TS_POS[thinkLevel]/100;
+  const start2=e=>{lastRatio=ratioFromX(e.clientX||0);start(e);};
+  const move2=e=>{if(!dragging)return;lastRatio=ratioFromX(e.clientX||0);e.preventDefault();paintContinuous(lastRatio);};
+  if(row){
+    row.addEventListener("pointerdown",start2);
+    row.addEventListener("pointermove",move2);
+    row.addEventListener("pointerup",end);
+    row.addEventListener("pointercancel",end);
+  }
+  document.addEventListener("click",e=>{if(!sheet.contains(e.target)&&e.target.id!=="btnIQ")sheet.classList.remove("show");});
+  const iq=document.getElementById("btnIQ");
+  if(iq)iq.onclick=e=>{
+    e.stopPropagation();
+    const emo=document.getElementById("emojiPanel"),panel=document.getElementById("plusPanel");
+    sheet.classList.toggle("show");
+    if(sheet.classList.contains("show")){if(emo)emo.classList.remove("show");if(panel)panel.classList.remove("show");}
+  };
+}
+(function initWxShell(){
+  const back=document.getElementById("btnBack");if(back)back.onclick=wxBack;
+  const clear=document.getElementById("btnBroom");if(clear)clear.onclick=wxClearChat;
+  const btn=document.getElementById("btnAttach"),panel=document.getElementById("plusPanel"),emo=document.getElementById("emojiPanel");
+  if(btn&&panel){
+    btn.onclick=e=>{e.stopPropagation();panel.classList.toggle("show");if(emo)emo.classList.remove("show");};
+    document.addEventListener("click",e=>{if(!panel.contains(e.target)&&e.target!==btn)panel.classList.remove("show");});
+  }
+  const cam=document.getElementById("camInput"),file=document.getElementById("fileInput");
+  const pc=document.getElementById("ppCamera"),pf=document.getElementById("ppPhoto");
+  if(pc&&cam)pc.onclick=()=>cam.click();
+  if(pf&&file)pf.onclick=()=>{file.click();};
+  initThinkSheet();
+  if(cam)cam.onchange=async()=>{
+    for(const f of cam.files){
+      try{if(f.type.startsWith("image/"))attachments.push({type:"image",dataUrl:await compressImage(f),name:f.name});}
+      catch(e){sysMsg("这张照片处理失败："+e.message);}
+    }
+    cam.value="";renderAttachRow();if(panel)panel.classList.remove("show");
+  };
+})();
 (async function start(){
   load();
   if(!KEY){
@@ -2194,17 +2787,22 @@ function migrateOldNames(){
   refreshGroupAvatar();
   try{document.querySelectorAll('img[data-sc]').forEach(im=>{im.src=scSuffix(im.getAttribute('src'));});}catch(e){}
   try{
-    const hk=KEY?"有":"无";
     let lk="读不到";try{lk=localStorage.getItem("ai_key_v1")?"有":"无";}catch(e){lk="读不到";}
     let ck="无";try{ck=readKeyCookie()?"有":"无";}catch(e){}
     const sa=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||window.navigator.standalone===true;
     const dg=document.getElementById("keyDiag");
     if(dg)dg.innerHTML="版本 <b style='color:#fff'>"+APP_VER+"</b>　·　打开方式："+(sa?"<b style='color:#ffd166'>桌面图标</b>":"浏览器")+
-      "<br>地址带钥匙："+(hk==="有"?"<b style='color:#ff7b72'>有(不安全，请删掉?k=参数)</b>":"<b style='color:#7ee787'>无</b>")+"　·　本机：<b style='color:"+(lk==="有"?"#7ee787":"#ff7b72")+"'>"+lk+"</b>　·　cookie：<b style='color:"+(ck==="有"?"#7ee787":"#ff7b72")+"'>"+ck+"</b>　·　本机备份：<b style='color:"+(lk==="有"?"#7ee787":"#ff7b72")+"'>"+(lk==="有"?"已存":"未存")+"</b>";
+      "<br>钥匙只在本机：<b style='color:"+(lk==="有"?"#7ee787":"#ff7b72")+"'>"+lk+"</b>　·　cookie：<b style='color:"+(ck==="有"?"#7ee787":"#ff7b72")+"'>"+ck+"</b>　·　本机备份：<b style='color:"+(lk==="有"?"#7ee787":"#ff7b72")+"'>"+(lk==="有"?"已存":"未存")+"</b>";
   }catch(e){}
+  renderConvList();   /* z117：会话列表先画好，退出再进能看到四个会话 */
   if(!KEY){document.getElementById("keyOverlay").classList.add("show");}
-  else if(!profile.done)sysMsg("随便说句话，她们先问你叫什么。");
-  else sysMsg("它们记得你。说句话试试～");
+  else if(!profile.done){sysMsg("随便说句话，她们先问你叫什么。");}
+  else{
+    /* z117：把存下来的对话画回屏幕——以前只写欢迎语，所以看着像"记录全丢了" */
+    try{restoreHistory();}catch(e){}
+    if(!(chatBox&&chatBox.children.length))sysMsg("它们记得你。说句话试试～");
+    try{setTimeout(()=>{if(!maybeProactiveGreet())setTimeout(maybeOldThing,1600);},900);}catch(e){}   /* z129：待跟进优先，没轮到它才旧事重提 */
+  }
 })();
 </script>
 </body>
