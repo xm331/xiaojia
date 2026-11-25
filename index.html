@@ -2531,12 +2531,14 @@ async function send(){
         const reply=(rp&&rp.fixed)?rp.fixed:await callModelNoRepeat(m,text,atts,{heartfelt:heartfelt,noMeme:noMeme,memes:myMemes||[],rp:rp,private:!!privateWith,soft:lowMood,emojiMode:pickEmojiMode(),packPick:pickPackCandidates(text||""),imgDesc:imgDesc,lvRef:lvRef,nonsense:nonsense},partial=>sv.push(partial));
         const sh=await sv.finish(reply);
         if(sh){sh.el.classList.add("spoke");setTimeout(()=>sh.el.classList.remove("spoke"),750);}
-        m.history.push({role:"assistant",content:reply});
-        trimHist(m);
+        /* z140: channel A - private replies must NOT go to group history.
+           Previously m.history.push ran unconditionally; in private chat m IS privateWith,
+           so the reply landed in group history and restoreHistory drew it back in the group. */
         if(privateWith){
           privateWith.private.push({role:"assistant",content:reply});
           if(privateWith.private.length>40)privateWith.private.splice(0,privateWith.private.length-40);
         }else{
+          m.history.push({role:"assistant",content:reply});trimHist(m);
           logFlow(m.name,reply);   /* 互相看见：只记群流水，不往别人历史里塞"用户：某某: 话" */
         }
         save();
@@ -2806,6 +2808,28 @@ function restoreHistory(){
     scrollBottom();
   }catch(e){}
 }
+/* z140: one-time cleanup - remove private replies that leaked into group history.
+   A reply present in both m.private (assistant) and m.history is a leak:
+   delete from group history only. Private threads and seed memory stay untouched.
+   Runs once (localStorage flag); source fix prevents new leaks. */
+function cleanLeakedPrivateOnce(){
+  const FLAG="ai_private_leak_cleaned_z140";
+  try{
+    if(localStorage.getItem(FLAG)==="1")return 0;
+    let n=0;
+    members.forEach(m=>{
+      const priv=Array.isArray(m.private)?m.private:[];
+      const texts=priv.filter(h=>h&&h.role==="assistant"&&h.content).map(h=>String(h.content));
+      if(!texts.length)return;
+      const before=(m.history||[]).length;
+      m.history=(m.history||[]).filter(h=>!(h&&h.role==="assistant"&&texts.indexOf(String(h.content))>=0));
+      n+=before-(m.history||[]).length;
+    });
+    if(n){save();try{sysMsg("🧹 removed "+n+" leaked private replies from group history; memory untouched.");}catch(e){}}
+    localStorage.setItem(FLAG,"1");
+    return n;
+  }catch(e){return 0;}
+}
 /* 清气泡：只清对话历史，种子记忆 sharedMem / longMem / 人设 / 梗库 一律不动 */
 function wxClearChat(){
   if(!window.confirm("清空屏幕上的聊天记录？\n她们对你的了解（种子记忆）会保留，只是对话从头开始。"))return;
@@ -2986,6 +3010,8 @@ function initThinkSheet(){
   if(!KEY){document.getElementById("keyOverlay").classList.add("show");}
   else if(!profile.done){sysMsg("随便说句话，她们先问你叫什么。");}
   else{
+    /* z140: clean leaked private replies before drawing group history */
+    try{cleanLeakedPrivateOnce();}catch(e){}
     /* z117：把存下来的对话画回屏幕——以前只写欢迎语，所以看着像"记录全丢了" */
     try{restoreHistory();}catch(e){}
     if(!(chatBox&&chatBox.children.length))sysMsg("它们记得你。说句话试试～");
