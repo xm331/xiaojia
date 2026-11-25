@@ -446,7 +446,7 @@ html,body{background:#ededed!important}
   }catch(e){}
 })();
 /* 版本号：每次改内容我都会改这个号，页面打开时自动探测更新 */
-const APP_VER="1.7.4";
+const APP_VER="1.7.5";
 /* ===== 自动更新探测：绕开浏览器缓存，发现新版就自动刷新一次 ===== */
 (function(){
   try{
@@ -1620,6 +1620,36 @@ function aiMsgLazy(m){
    没人能一口气把三条糊在你脸上，也不会有人因为"轮不到"而被按着头等前面的人说完。
    一直不换行的长段落仍退回逐字打字机——此时该角色像"正在输入"，别人照常发言。 */
 const groupPlayer={views:{},order:[],pumping:false,waiters:[],lineup:[],spoken:[],played:[]};
+/* z146：本轮谁上场——本地打分，不多调模型。
+   情绪事 Vesta 优先；玩梗的人带梗优先；问主意时正常/随口/通透优先；
+   上一轮刚开口的降权，让三个人轮流歇，不至于总是一个人回。 */
+const lastSpoke={};
+function pickSpeakers(pool,n,userText){
+  if(!Array.isArray(pool)||pool.length<=n)return pool.slice();
+  const s=String(userText||"");
+  const ask=/[?？]|谁|怎么|怎么办|帮|能不能|要不要|该不该|推荐|主意|建议|你觉得/.test(s);
+  const emo=/难过|难受|伤心|想哭|崩溃|委屈|焦虑|压力大|烦死|好烦|emo/i.test(s);
+  const joke=/哈哈|笑死|卧槽|离谱|绝了|傻逼|牛逼/.test(s);
+  const now=Date.now();
+  const w=d=>{
+    let x=1;
+    const nm=String((d.m&&d.m.name)||"");
+    if(emo&&nm==="Vesta")x*=7;
+    if(joke&&d.myMemes&&d.myMemes.length)x*=2.5;
+    if(ask&&d.rp&&/正常|随口|通透/.test(d.rp.name||""))x*=1.8;
+    const t=lastSpoke[nm];
+    if(t&&now-t<90000)x*=0.3;
+    return x;
+  };
+  const rest=pool.slice(),out=[];
+  for(let k=0;k<n&&rest.length;k++){
+    let total=0;rest.forEach(d=>total+=w(d));
+    let x=Math.random()*total,pick=rest[rest.length-1];
+    for(const d of rest){x-=w(d);if(x<0){pick=d;break;}}
+    out.push(pick);rest.splice(rest.indexOf(pick),1);
+  }
+  return out;
+}
 function groupDupNorm(x){return String(x).replace(/[，。！？!?,.、～~\s]/g,"");}
 function groupIsDup(txt){
   const x=groupDupNorm(txt);if(!x)return false;
@@ -2592,20 +2622,23 @@ async function send(){
   /* 这一行决定走哪条通道：命中连环梗或AI起头=接龙，没命中=正常说话 */
   const formation=!!(chainHit||aiLead);
 
-  /* z126·抄群相「看脸色+闭嘴」：真人不会每次全员到齐。
-     只在正常说话通道生效；接龙有固定队形，动了梗就散，不碰。
-     规则：低落→只留一人先共情(Vesta优先)；两个字/纯语气词→只留一人；其余维持三人。 */
+  /* z146·真人群聊不排队：你一句话，一两个人接，偶尔三人都来。
+     接龙有队形不动；你低落→Vesta一人先哄；只发两个字/语气词→随机一人。
+     其余按档位抽人数，挑人本地打分：跟话题有关的优先、刚说过的歇一轮。 */
   const bare=String(text||"").replace(/[\s。！？!?~～….,，]/g,"");
   const tinyMsg=bare.length<=2||/^(嗯|哦|啊|额|呃|哈|嗨|哟|好|行|OK|ok|笑死|哈哈+|呜|唉)[啊呀哦呢嘛哈]*$/i.test(bare);
-  let quietTurn=false;
-  if(!noMeme&&!privateWith&&!formation&&talkers.length>1){
+  if(!privateWith&&!formation&&talkers.length>1){
     if(lowMood){
-      quietTurn=true;
       const comforter=draws.find(d=>d.m&&d.m.name==="Vesta")||draws[0];
       draws=draws.filter(d=>d===comforter);
     }else if(tinyMsg){
-      quietTurn=true;
       draws=[draws[Math.floor(Math.random()*draws.length)]];
+    }else{
+      /* 人数：不思考 45/35/20，接着聊 35/40/25，认真档 20/45/35 */
+      const _p=lvRef.v===0?[45,35,20]:(lvRef.v===1?[35,40,25]:[20,45,35]);
+      const _r=Math.random()*100;
+      const _n=_r<_p[0]?1:(_r<_p[0]+_p[1]?2:3);
+      if(_n<draws.length)draws=pickSpeakers(draws,_n,text);
     }
   }
 
@@ -2742,13 +2775,11 @@ async function send(){
   }
   if(myRun!==runSeq){status.textContent="";return;} /* 这一轮被打断了，不再接龙 */
 
-  /* ===== 收尾补接龙：欠的台词、欠的牌必须出；没欠的就 30% 概率随便加一两句 ===== */
-  /* z145：不思考档=秒回，三人说完就结束——关掉"没欠台词却随机补一两句"，
-     那要多调一次模型，是"回得慢"的真凶。真欠台词的接龙仍照常补。 */
-  const isNoThink=(lvRef.v===0);
-  let followUps=(!isNoThink&&!noMeme&&!quietTurn&&talkers.length>1&&Math.random()<0.3)?1+Math.floor(Math.random()*2):0;
+  /* ===== 收尾：只补接龙欠的台词，不再没事拉人补话 ===== */
+  /* z146：以前三人说完还 30% 概率再拉一两句，等于把刚定的"只来一个人"又凑成全员。
+     现在只认欠下的台词/被顶掉的牌，没欠就直接收工。 */
   const needMore=pendingChain.length+owedCard.length;
-  if(!noMeme&&!quietTurn&&needMore+1>followUps)followUps=needMore+1;
+  const followUps=(!noMeme&&!privateWith)?needMore:0;
   let prev=null;
   for(let i=0;i<followUps;i++){
     if(myRun!==runSeq)break;   /* 被新消息打断就别再往下接龙 */
@@ -2785,6 +2816,8 @@ async function send(){
       if(ok)sysMsg(`🧠 把聊过的整理进了共享记忆，开启新对话。`,'memory');
     }catch(e){sysMsg(`🧠 这次没整理成功（${esc(e.message)}），下次再试。`);}
   }
+  /* z146：记下这轮谁开口了，下一轮让刚说过的歇一歇 */
+  try{(groupPlayer.played||[]).forEach(p=>{if(p&&p.n)lastSpoke[p.n]=Date.now();});}catch(e){}
   status.textContent="";busy=(myRun!==runSeq);
 }
 
