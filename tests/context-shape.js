@@ -89,15 +89,15 @@ const sys = b => b.messages.filter(m => m.role === 'system').map(m => typeof m.c
   vm.runInContext('pickEmojiMode=()=>"pack"', win);
   await send(); await new Promise(r => setTimeout(r, 1200));
   const packSys = sys(calls[0]);
-  const packBlock = (packSys.match(/【表情规则】[\s\S]*?(?=\n---|$)/) || [''])[0];
+  const packBlock = (packSys.match(/【表情规则·z143】[\s\S]*?(?=\n---|$)/) || [''])[0];
   const cnt = (packBlock.match(/\{\{e\d+\}\}=/g) || []).length;
-  console.log('  这一轮给出的表情包：' + cnt + ' 个（原来是 16 个全给）');
-  console.log((cnt > 0 && cnt <= 6 ? '✅' : '❌') + ' 只给 6 个以内');
+  console.log('  这一轮给模型的表情候选：' + cnt + ' 个（z143 起改为前端按回复匹配，模型端 0 个）');
+  console.log((cnt === 0 ? '✅' : '❌') + ' 不再给模型塞表情候选（z143）');
 
   console.log('\n== ② 会变的块都在最后（缓存前缀）==');
   const order = calls[0].messages.filter(m => m.role === 'system').map(m => {
     const t = typeof m.content === 'string' ? m.content : '';
-    if (t.indexOf('【表情规则】') === 0) return '表情规则';
+    if (t.indexOf('【表情规则') === 0) return '表情规则';
     if (t.indexOf('【三人共用') === 0) return '共享记忆';
     if (t.indexOf('【关于') === 0) return '长期事实';
     if (t.indexOf('【本轮人设') === 0) return '人设牌';

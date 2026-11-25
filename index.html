@@ -672,7 +672,8 @@ const RULE_LV0="【这一轮·不思考·真人微信秒回】你现在就是微
   "   **上面全是「怎么接」的路数，不是让你背句子。照着这个路数、用他这一句现编，才像真人；照搬任何一句都是错的。**\\n"+
   "④**复读只有一种情况允许**：故意玩梗复读他一个词，而且**只复这一句就停**。\\n"+
   "⑤**绝不从他句子里抠词拼你的回复**——要么真接住、要么给个符号/省略号，绝不硬套。\\n"+
-  "⑥接不上就不接：群里不冒泡，或回个省略号。真人不会每句都接住。";
+  "⑥接不上就不接：群里不冒泡，或回个省略号。真人不会每句都接住。\n"+
+  "⑦**没词了/没听懂，可以直接甩「纳尼」或「神马」**——这俩就是真人卡壳时的应声，不用硬找话说，也不算答非所问。";
 const RULE_LV1="【这一轮·接着聊】他这句是在接着前面的话往下说——翻一眼上面聊到哪，接的是'他这句话在回应什么'，不只是字面那几个字。像那种一直在听他说话的朋友，顺着接、接得准。\n"+
   "①还是短、还能玩梗、还能损他——只是比秒回档多一分'我知道你为什么说这句'。\n"+
   "②可以点一下他话里的情绪（累、烦、得意、失落），一句带过就行；**别替他下定义、别分析他为什么这样、别猜他想要什么、别给一串建议**。\n"+
@@ -687,13 +688,16 @@ const RULE_LV3="【这一轮·帮他干活】他让你真办点事（写东西�
 /* ===== z137：不可解闸门 =====
    「噜啦啦」这种——纯拟声、纯语气词、没有实义。他就是随口发癫，不是让你猜谜语。
    硬规定：看不懂就是看不懂，回问号或者陪他发癫，**绝对不许替他解释这句话是什么意思**。 */
-const RULE_NONSENSE="【他这句话你看不懂】这是他随口发癫/一句没头没尾的话——**不要试图理解它、不要替他解释、不要猜他想说什么**。你只需要做一件事：像真朋友那样表示没看懂。回「？」「？？」「你又发什么癫」「这是啥」「啥玩意儿」这种就行，一个字都别多。也**绝对不许**说「这是洗澡还是唱歌」「你是不是想说…」这种替他下定义的猜测（那是最像客服的一句话）。也可以陪他一起发癫（学着他的语气接一句），但别编剧情、别引用梗库里的人物。";
+const RULE_NONSENSE="【他这句话你看不懂】这是他随口发癫/一句没头没尾的话——**不要试图理解它、不要替他解释、不要猜他想说什么**。你只需要做一件事：像真朋友那样表示没看懂。回「？」「？？」「纳尼」「神马」「你又发什么癫」「这是啥」「啥玩意儿」这种就行，一个字都别多。也**绝对不许**说「这是洗澡还是唱歌」「你是不是想说…」这种替他下定义的猜测（那是最像客服的一句话）。也可以陪他一起发癫（学着他的语气接一句），但别编剧情、别引用梗库里的人物。";
 
 /* ===== 共享梗库：三人共用，越养越多（存本地） ===== */
 const LS_MEMES="ai_shared_memes_v1";
 const LS_MEM="ai_shared_mem_v1";
 const LS_LONG="ai_long_mem_v1";   /* 长期事实：认真模式说的关于小米的话，压缩去重、不被短期压缩冲掉 */
 const SEED_MEMES=[
+  /* z143：卡壳/没听懂时的百搭应声 */
+  "纳尼",
+  "神马",
   /* 场景梗：百搭固定回复（小米发癫/说怪话时甩这句） */
   "你会说话就好好说话，不会说话就给你踢臭水沟里面去",
   /* 妖精/成精线：抖音评论区高频复读，贴场景才用、搭不上别硬塞 */
@@ -1794,7 +1798,12 @@ const CUSTOM_PACK=[
   {file:"dama.jpg", name:"凝视", hint:"大妈正脸凝视，愣住/尴尬/无语地看着/呆住"},
   {file:"huachi.jpg", name:"花痴", hint:"狗狗爱心眼，花痴/心动/喜欢/馋/看呆了"},
   {file:"xiaomao.jpg", name:"小猫扒拉", hint:"小猫扒着衣服，撒娇/求抱抱/可怜巴巴/依附"},
-  {file:"huangdou.jpg", name:"无语黄豆", hint:"大嘴斜眼黄豆，无语/尴尬/嫌弃/流汗/麻了/你有啥好说的"}
+  {file:"huangdou.jpg", name:"无语黄豆", hint:"大嘴斜眼黄豆，无语/尴尬/嫌弃/流汗/麻了/你有啥好说的"},
+  /* z143：小米新填的 4 个 */
+  {file:"duiwo.jpg", name:"总觉得对面要骂我", hint:"博美瞪大眼配字「总觉得对面要丢我什么」，丢=丢你老母(广西话骂人)——感觉对面要开骂了、要骂脏话了，心虚警觉防备"},
+  {file:"wenhao.jpg", name:"黑人问号脸", hint:"经典问号脸，看不懂/疑惑/你在说啥/一脸问号，无语又困惑"},
+  {file:"pianyi.jpg", name:"你还真是便宜", hint:"葫芦娃配字「你还真是便宜」，阴阳怪气嘲讽对方廉价/掉价/不值钱，怼人专用"},
+  {file:"ganren.jpg", name:"感人至深", hint:"哈士奇飙泪配字「感人至深」，感动哭了/泪目/太感人了，也可反讽假惺惺"}
 ];
 /* z115：表情包关键词。表情包跟梗不一样——它只是配图，不会编剧情，
    所以命中 0 个仍然会随机补足到 6 个（只是排在有命中的后面）。
@@ -1815,8 +1824,51 @@ const PACK_KEYS={
   "dama.jpg":["愣住","尴尬","无语","呆住"],
   "huachi.jpg":["花痴","心动","喜欢","馋","看呆"],
   "xiaomao.jpg":["撒娇","求抱抱","可怜","粘人"],
-  "huangdou.jpg":["无语","尴尬","嫌弃","流汗","麻了"]
+  "huangdou.jpg":["无语","尴尬","嫌弃","流汗","麻了"],
+  /* z143 */
+  "duiwo.jpg":["骂我","要骂","开骂","丢你老母","丢我","脏话","心虚","警觉","防备","要丢"],
+  "wenhao.jpg":["看不懂","疑惑","啥意思","什么鬼","问号","懵","你在说啥","你说啥"],
+  "pianyi.jpg":["便宜","廉价","掉价","不值钱","嘲讽","阴阳","看不起","就这"],
+  "ganren.jpg":["感动","泪目","哭了","感人","催泪","眼泪","假惺惺"]
 };
+/* z143：按【她自己写的回复】去表情库挑一个贴上来——不再让模型吐标记、不再掷骰子。
+   规则：必须关键词硬命中才贴（PACK_KEYS 命中 +6 分，name/hint 二字词命中 +1 分，满 3 分才用），
+   命中 0 就一个都不贴。贴不贴由关键词表说了算——小米填得越全，贴得越准。
+   不思考档(lv0)不贴——秒回要快；正经事(heartfelt)不贴——保持分寸。 */
+function pickStickerByReply(replyText,o){
+  o=o||{};
+  const lv=(o.lvRef&&typeof o.lvRef.v==="number")?o.lvRef.v:(typeof o.lv==="number"?o.lv:0);
+  if(lv===0||o.heartfelt||!CUSTOM_PACK.length)return null;
+  const s=String(replyText||"");if(!s)return null;
+  const words=[];
+  for(let i=0;i<s.length-1;i++){
+    const w=s.slice(i,i+2);
+    if(/[\u4e00-\u9fa5]/.test(w[0])&&!/[，。！？、\s]/.test(w))words.push(w);
+  }
+  let best=null,bestSc=0;
+  CUSTOM_PACK.forEach((p,i)=>{
+    let sc=0;
+    const ks=PACK_KEYS[p.file]||[];
+    for(const k of ks){if(k&&s.indexOf(k)>=0)sc+=6;}
+    if(!sc){
+      const hay=String(p.name||"")+String(p.hint||"");
+      for(const w of words){if(hay.indexOf(w)>=0)sc+=1;}
+    }
+    if(sc>bestSc){bestSc=sc;best={p:p,i:i};}
+  });
+  return bestSc>=3?best:null;
+}
+/* 把一个表情包贴到刚播完的那条气泡上（不写进文本、不进历史——纯显示层） */
+function attachSticker(sh,p){
+  if(!sh||!sh.bubble||!p)return;
+  const u=scSuffix("emojis/"+p.file);
+  const kind=p.type||stickerKind(p.file);
+  const tag=kind==="video"
+    ? '<video class="stickerVid" src="'+u+'" autoplay loop muted playsinline></video>'
+    : '<img class="stickerImg" src="'+u+'" alt="">';
+  sh.bubble.insertAdjacentHTML("beforeend",tag);
+  try{scrollBottom();}catch(e){}
+}
 /* 本轮表情模式：多数轮次不带（none），聊得热闹时才可能冒一个——表情跟着内容走，不跟运气走 */
 function pickEmojiMode(){const r=Math.random();return r<0.45?"none":(r<0.75?"emoji":"pack");}
 let epTab="emoji";
@@ -2055,18 +2107,15 @@ async function callModel(m,userText,atts,ctx,onChunk){
   {
     let emoRule;
     if(heartfelt){
-      emoRule="现在他在讲正经事或心里话：基本不用表情，最多一个很软的 emoji(比如 🥺🫶)，不要用表情包。";
+      emoRule="现在他在讲正经事或心里话：基本不用 emoji，最多一个很软的(🥺🫶)。表情包不用你管。";
     }else if((ctx&&ctx.emojiMode)==="none"){
-      emoRule="这一轮正常说话，不带表情也不带表情包——除非你这句话真的好笑到自己都想配一个，那就顺手带一个，别硬加。";
-    }else if((ctx&&ctx.emojiMode)==="pack"&&CUSTOM_PACK.length){
-      /* z108：只给他这句话贴得上的 6 个（前端挑好传进来），不再 16 个全给 */
-      const pick=(ctx&&ctx.packPick&&ctx.packPick.length)?ctx.packPick:CUSTOM_PACK.map((p,i)=>({p,i}));
-      const list=pick.map(o=>"{{e"+(o.i+1)+"}}="+o.p.hint).join("；");
-      emoRule="这一轮可以用【表情包】，但不是必须：说得好笑、或者正好有个图特别贴，才顺手带一个，把标记原样插进那句话里(比如 '笑死{{e2}}')。可选表情包只有这些："+list+"。贴场景挑，不贴就一个都不带，别为了用而用。一次最多一个。只输出标记本身，不要解释、不要把 hint 的文字写出来。";
+      emoRule="正常说话，别硬加 emoji。表情包不用你管，系统会自动配。";
     }else{
-      emoRule="这一轮可以用 emoji，但不是必须：真好笑、真有情绪时才顺手带一个(比如 哈哈哈😂、真的假的🤔、冲🐶)，贴着场景来，没想到就完全不带。一次最多一个，别堆一串，别用 ❌✅ 这种机器人符号。";
+      /* z143: sticker picked on frontend by matching her own reply text */
+      emoRule="只管说人话。emoji 真有情绪时才顺手带一个(比如 哈哈哈😂、真的假的🤔)，没想到就不带，别堆一串，别用 ❌✅ 这种机器人符号。表情包不用你管，系统会自动配。";
     }
-    messages.push({role:"system",content:"【表情规则】"+emoRule});
+    /* z143: model only talks - no {{ }} stickers; frontend attaches by reply text */
+    messages.push({role:"system",content:"【表情规则·z143】"+emoRule+" 不许在文字里写 {{ }} 这种标记，一个都不许写。"});
   }
   /* z108：之前聊过的（历史被折叠掉的旧话），别装不记得 */
   /* z116：群聊读共享摘要；私聊读自己那条线的 */
@@ -2428,6 +2477,8 @@ async function send(){
       try{
         const reply=await callModelNoRepeat(m,text||"你好",atts,{intro:q,emojiMode:pickEmojiMode(),packPick:pickPackCandidates(text||""),imgDesc:imgDesc,lvRef:lvRef,nonsense:nonsense},partial=>sv.push(partial));
         const sh=await sv.finish(reply);
+        /* z143: attach sticker by matching her own reply text */
+        try{const pk=pickStickerByReply(reply,{lv:thinkLevel});if(pk)attachSticker(sh,pk.p);}catch(e){}
         m.history.push({role:"assistant",content:reply,t:Date.now()});
         trimHist(m);
         save();
@@ -2576,6 +2627,8 @@ async function send(){
       }
       const reply=(rp&&rp.fixed)?rp.fixed:await callModelNoRepeat(m,free?"(接着群里的话，自然接一句)":text,atts,ctx,partial=>sv.push(partial));
       const sh=await sv.finish(reply);
+      /* z143: sticker by reply text */
+      try{const pk=pickStickerByReply(reply,ctx);if(pk)attachSticker(sh,pk.p);}catch(e){}
       if(sh){sh.el.classList.add("spoke");setTimeout(()=>sh.el.classList.remove("spoke"),750);}
       if(privateWith){
         /* z136：私聊回复只进私聊记录，不进群历史 */
@@ -2656,6 +2709,8 @@ async function send(){
       try{
         const reply=(rp&&rp.fixed)?rp.fixed:await callModelNoRepeat(m,text,atts,{heartfelt:heartfelt,noMeme:noMeme,memes:myMemes||[],rp:rp,private:!!privateWith,soft:lowMood,emojiMode:pickEmojiMode(),packPick:pickPackCandidates(text||""),imgDesc:imgDesc,lvRef:lvRef,nonsense:nonsense},partial=>sv.push(partial));
         const sh=await sv.finish(reply);
+        /* z143: sticker by reply text, skip no-think */
+        try{const pk=pickStickerByReply(reply,{lvRef:lvRef,heartfelt:heartfelt});if(pk)attachSticker(sh,pk.p);}catch(e){}
         if(sh){sh.el.classList.add("spoke");setTimeout(()=>sh.el.classList.remove("spoke"),750);}
         /* z140: channel A - private replies must NOT go to group history.
            Previously m.history.push ran unconditionally; in private chat m IS privateWith,
