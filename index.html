@@ -649,6 +649,15 @@ const RULE_TONE="【不许客服腔】下面这些句式一律不许出现在你
    0 不思考=回话（秒回、短、像人）／1 轻度=读懂（翻上下文、真接住）／
    2 中度=出主意（帮他想、给判断、给下一步）／3 重度=干正事（写东西、做决定、算账）
    每一档是「能做什么」的不同，不是「回复多长」。 */
+/* z139: no-think mode - one short line, riding on what he just said.
+   Previously this level used RULE_CHAT ("a long line is fine") -> root of slow+long replies. */
+const RULE_LV0="【这一轮·不思考·秒回】这是最快的一档，只做一件事：**贴着他刚说的这句话，甩一句短的回去**。\n"+
+  "①一句封顶，七个字以内最好——「？」「草」「绝了」「笑死」「真的假的」「你这话说的」这种就很好。绝不接第二句。\n"+
+  "②**必须按他这句话玩**：从他这句话里挑一个词、一个音、一个画面，顺着接、损他、思回去、或者接个梗——但他写的那个词得在对得上，不能答非所问、不能换个话题。\n"+
+  "③好笑优先、有梗优先、越损越好笑越好；脏话黑话随便用，别客气。\n"+
+  "④**不分析、不解释、不建议、不追问、不安慰、不翻译他的话**——他说什么就是什么，别猜他什么意思（这是死命令，压倒一切）。\n"+
+  "⑤看不懂就扣「？」或「？？？」或「你又在发什么癔」，别硬接、别着猜。\n"+
+  "⑥绝不列点、绝不写小作文、绝不用客服句式（「我理解」「你觉得呢」「要不要试试」）。";
 const RULE_LV1="【这一轮·读懂】先把上下文翻一遍再回：他这句话是在回应前面哪句？是接着刚才的话题往下说，还是换了新事？顺着这个接，别只盯着他最后一句的字面意思回。可以在意他话里的情绪（累、烦、得意、失落），但**别替他下定义、别猜他想要什么、别给一串建议**。他要是只说了半句，你就顺着那半句接，别逼他把话说完。**别端着**——贴得上的梗照样可以顺手带一个，别一上来就正经得跟做报告似的。";
 const RULE_LV2="【这一轮·出主意】他卡住了、想不明白，来问你。这时候**别只共情、别只回「我理解」**——给他一个能往下走的落点：你的判断是什么、你可以先做哪一步、这条路哪里会卡。直接说，像朋友给主意（两到四句，最多一个具体建议），别列成「一二三四五」的方案书，别甩给他一堆选项让他自己挑（他挑不动才来问你的）。你有不同意见就直说，别为了不让他不高兴就顺着说。如果他讲的是正经事或心里话：不拆条、一次说完，两三句到一小段，直接给判断，别列点、别说教、不灌鸡汤，好好接住他；刚才在玩闹的话，这一句就是叫停——立刻收起玩闹。如果他这句只是随口打岔、没讲正经事，就轻松接一句，别硬深沉。";
 const RULE_LV3="【这一轮·干正事】他让你干正事了（写东西、做决定、算账、分析）。认真、完整、把事办成——该展开就展开，该分点就分点（这条允许分点，跟平时的说话规矩不一样），但**照样说人话**，别写成客服报告、别用「综上所述」「首先其次最后」这种公文腔。给结论也给理由，缺信息就问，别猜事实。";
@@ -1901,19 +1910,23 @@ async function callModel(m,userText,atts,ctx,onChunk){
   if(lvNow>=3)messages.push({role:"system",content:RULE_LV3});
   else if(lvNow===2)messages.push({role:"system",content:RULE_LV2});
   else if(lvNow===1)messages.push({role:"system",content:RULE_LV1});
+  /* z139: no-think level uses its own snappy rule */
   else if(isChain)messages.push({role:"system",content:RULE_PLAY});
   else if(ctx&&ctx.soft)messages.push({role:"system",content:RULE_SOFT});
+  else if(lvNow===0)messages.push({role:"system",content:RULE_LV0});
   else messages.push({role:"system",content:RULE_CHAT});
   /* z137: nonsense gate - when he babbles, model must NOT guess what he means */
   if(ctx&&ctx.nonsense)messages.push({role:"system",content:RULE_NONSENSE});
   /* 记忆按场景给：玩梗不翻旧账，只带长期事实 + 记忆开头一小段（够认出他是谁）；
      认真 / 私聊 / 初见 / 接龙 才带全量。省下的一千多字换算成首字速度。 */
-  if(longMem)messages.push({role:"system",content:`【关于小米的长期事实·他认真说过的、记住别忘】\n${longMem}`});
+  /* z139: skip long facts in no-think mode */
+  if(longMem&&lvNow!==0)messages.push({role:"system",content:`【关于小米的长期事实·他认真说过的、记住别忘】\n${longMem}`});
   if(sharedMem){
     /* z106：深度模式的输入费是大头（大模型输入价是快模型的 10 倍）。
        记忆开头就是他这个人是谁 + 长期事实，800 字够认得他；私聊/接龙/初见仍带全量，那几种不能丢上下文。 */
     let memShow;
     if(isPrivate||isChain||!!(ctx&&ctx.intro))memShow=sharedMem;
+    if(lvNow===0)memShow=sharedMem.length<=150?sharedMem:(clipMem(sharedMem,150)+"...");
     else if(heartfelt)memShow=sharedMem.length<=800?sharedMem:(clipMem(sharedMem,800)+"…");
     else memShow=sharedMem.length<=400?sharedMem:(clipMem(sharedMem,400)+"…");
     messages.push({role:"system",content:`【三人共用的记忆·用来更懂小米，别像查户口一样主动摊开说】\n${memShow}`});
@@ -1939,11 +1952,13 @@ async function callModel(m,userText,atts,ctx,onChunk){
   /* z116：群聊读共享摘要；私聊读自己那条线的 */
   {
     const gistShow=isPrivate?m.gist:sharedGist;
-    if(gistShow)messages.push({role:"system",content:"【之前聊过、别装不记得】"+gistShow});
+    /* z139: no-think skips gists */
+    if(gistShow&&lvNow!==0)messages.push({role:"system",content:"【之前聊过、别装不记得】"+gistShow});
   }
   /* z108：群里别人刚说的话，单独一份（带说话人名字），别跟"小米说的"混在一起。
      私聊和接龙不用：私聊是单独对话，接龙已经有【最后一句】。 */
-  if(!isPrivate&&!isChain&&typeof groupFlow!=="undefined"&&groupFlow.length){
+  /* z139: no-think skips group flow */
+  if(lvNow!==0&&!isPrivate&&!isChain&&typeof groupFlow!=="undefined"&&groupFlow.length){
     const others=groupFlow.filter(x=>x.n!==m.name);
     if(others.length)messages.push({role:"system",content:"【群里刚说的话·名字是说话的人·别当成是他说的】"+others.map(x=>x.n+"："+x.t).join(" / ")});
   }
@@ -1974,7 +1989,7 @@ async function callModel(m,userText,atts,ctx,onChunk){
     }
   }
   /* z128：给她们接上时钟——现在几点+距上次聊多久（思路抄 dsh-time-context：时间作为每轮增量注入，不进最前缀） */
-  try{
+  try{ if(lvNow!==0){
     const _n=new Date(),_wk="日一二三四五六"[_n.getDay()],_hh=_n.getHours(),_mm=_n.getMinutes();
     const _seg=_hh<6?"深夜":_hh<9?"清晨":_hh<12?"上午":_hh<14?"中午":_hh<18?"下午":_hh<22?"晚上":"深夜";
     let _tctx="【现在的时间】"+_n.getFullYear()+"年"+(_n.getMonth()+1)+"月"+_n.getDate()+"日 星期"+_wk+" "+_hh+":"+String(_mm).padStart(2,"0")+"（"+_seg+"）。像朋友一样自然用：饭点能问吃没吃、深夜能说别熬夜、周中周中有数，但别每句都报时间，别当播报员。";
@@ -1988,7 +2003,7 @@ async function callModel(m,userText,atts,ctx,onChunk){
       }
     }
     messages.push({role:"system",content:_tctx});
-  }catch(e){}
+  }}catch(e){}
   /* 给别人用时，把提示词里的"小米"换成他自己的名字 */
   for(let i=0;i<messages.length;i++){
     if(messages[i].role==="system"&&typeof messages[i].content==="string")messages[i]={role:"system",content:localize(messages[i].content)};
@@ -2009,8 +2024,8 @@ async function callModel(m,userText,atts,ctx,onChunk){
   /* 接龙也不塞假引子：最后一条真实对话 + 【最后一句】已经说清楚了 */
   /* 普通发话：这句话已经在他的历史里了，不再追加一遍（重复会被模型当成强调指令，回复变硬） */
   /* z137: per-level params. 0=short+human 1=a bit longer 2=substantive 3=full job */
-  const maxTok=[55,160,320,700][lv]||55;
-  const temp=[0.95,0.9,0.85,0.75][lv]||0.95;
+  const maxTok=[35,160,320,700][lv]||35;
+  const temp=[1.15,0.9,0.85,0.75][lv]||1.15;
   const deepOn=lv>=3;
   const bodyObj={model:useModel,messages,temperature:temp,max_tokens:maxTok,
     /* z84/z120：enable_thinking 是 Qwen/GLM/DeepSeek 系专有参数。重度档才打开 */
@@ -2806,7 +2821,7 @@ function wxClearChat(){
 }
 /* z120/z137: think level - 0=reply 1=read-context 2=advise 3=do-the-job */
 const THINK_INFO=[
-  {name:"不思考",label:"思考深度",desc:"<b>回话</b>　快模型 · 秒回 · 短一句 · 有趣像人 · 最便宜<span class='ts-cost'>（默认）</span>"},
+  {name:"不思考",label:"思考深度",desc:"<b>秒回</b>　快模型 · 一句封顶 · 贴着你这句玩 · 有梗好笑 · 最便宜<span class='ts-cost'>（默认）</span>"},
   {name:"轻度",label:"轻度 ✦",desc:"<b>读懂</b>　快模型 · 翻上下文 · 真接住你那句话 · 稍长一点"},
   {name:"中度",label:"中度 ✦✦",desc:"<b>出主意</b>　GLM-5.3 · 你想不明白时帮你拆、给判断、给下一步 · 慢一点"},
   {name:"重度",label:"重度 ✦✦✦",desc:"<b>干正事</b>　大模型 + 打开思考链 · 写东西、做决定、算账 · 最慢最烧钱<span class='ts-cost'>（可能不稳定）</span>"}

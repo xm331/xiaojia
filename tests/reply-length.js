@@ -111,8 +111,8 @@ const member = { id: 'a', name: 'Nyx', url: 'u', key: 'sk-test', model: 'zai-org
   mode = 'short';
   await callModel(member, '在干嘛', [], {}, null);
   const sys = sentBody.messages.map(x => typeof x.content === 'string' ? x.content : '').join('\n');
-  console.log((sys.indexOf('别掐着字数') >= 0 ? '✅' : '❌') + ' 闲聊：字数松绑（短句为主、好笑可长）');
-  console.log((sentBody.max_tokens === 55 ? '✅' : '❌') + ' 日常上限 = ' + sentBody.max_tokens + '（原 40）');
+  console.log((sys.indexOf('一句封顶') >= 0 ? '✅' : '❌') + ' 不思考档：一句封顶（z139 新语义）');
+  console.log((sentBody.max_tokens === 35 ? '✅' : '❌') + ' 秒回上限 = ' + sentBody.max_tokens + '（原 55）');
 
   console.log('\n== C. 被掐断时不留半句 ==');
   mode = 'cut';

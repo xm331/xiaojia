@@ -122,7 +122,7 @@ const sys = b => b.messages.filter(m => m.role === 'system').map(m => typeof m.c
   console.log('  群流水条数：' + flow.length + '（内容：' + flow.map(x => x.n + ':' + x.t).join(' | ') + '）');
   const sys2 = sys(calls[0]);
   const hasFlow = sys2.indexOf('【群里刚说的话') >= 0;
-  console.log((hasFlow ? '✅' : '❌') + ' 第二轮的提示词里带上了"群里刚说的话"');
+  console.log((!hasFlow ? '✅' : '❌') + ' 不思考档不带群流水（z139：只接他这句，不顺着别人接）');
   const bump = calls[0].messages.filter(m => m.role === 'user' && typeof m.content === 'string' && /^(Nyx|Vesta|Demeter)：/.test(m.content));
   console.log((bump.length === 0 ? '✅' : '❌') + ' 历史里不再有"用户：某某: 话"这种假用户发言（' + bump.length + ' 条）');
 
