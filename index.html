@@ -1262,8 +1262,6 @@ let runSeq=0;const runCtrls=new Set();
 /* z137: turnLvRef - one shared object per turn.
    Sent requests are frozen (HTTP body cannot change mid-flight);
    not-yet-sent replies read the new level. */
-let turnLvRef=null;
-function turnLvSet(v){if(turnLvRef)turnLvRef.v=v;}
 let members=[],busy=false,attachments=[],memLimit=MEM_LIMIT_DEFAULT,sharedMem="",recentReplies=[];
 /* z89：深度思考开关。默认关；关着就永远是快模型秒回，不再偷偷自动切换 */
 /* z120：思考深度四档 0=不思考(玩梗) 1=轻度 2=中度(换大模型) 3=重度(大模型+真思考链) */
@@ -1409,7 +1407,7 @@ function estimateDueAt(text,now){
   if(/等下|一会儿|一会|待会|等会|这就去|马上|这就|现在就去/.test(text))return now+90*60*1000;   /* 一会儿就办的事，一个半小时后该有信儿 */
   return now+4*3600*1000;   /* 默认：比如"去面试了"，4小时后差不多该有结果 */
 }
-function notePendingFollowup(text){
+function notePendingFollowup(text,srcWho){
   if(!text||typeof text!=="string")return;
   if(!PENDING_RE.test(text))return;
   if(!/\b(我|咱|要去|明天|今天|下午|等下|准备去|等会|这就去|待会)/.test(text)&&!/要去|准备去|明天|等结果|等通知/.test(text))return;
@@ -1418,7 +1416,10 @@ function notePendingFollowup(text){
   const now=Date.now(),clean=text.slice(0,60);
   /* 同一件事24小时内不重复记 */
   if(arr.some(x=>x&&x.text===clean&&now-(x.at||0)<24*3600*1000))return;
-  arr.push({text:clean,at:now,dueAt:estimateDueAt(text,now),asked:false});
+  /* z138：出处。private=私聊里说的，who=跟谁说的——回访只走这条私聊线，绝不进群聊 */
+  const src=srcWho?"private":"group";
+  const who=srcWho?String(srcWho.name||""):"";
+  arr.push({text:clean,at:now,dueAt:estimateDueAt(text,now),asked:false,src:src,who:who});
   if(arr.length>20)arr=arr.slice(-20);
   try{localStorage.setItem(LS_PENDING,JSON.stringify(arr));}catch(e){}
 }
@@ -1432,7 +1433,7 @@ function markPendingAsked(at){
    只存他的原话，绝不编造；跟待跟进互斥（一次开页最多一条主动消息），独立 localStorage。 */
 const LS_CB="ai_callbacks_v1";
 const CB_RE=/(最近在玩|最近在追|最近在看|在玩|开始玩|入坑|买了|入手了|种草|在看|在追|在学|想去|打算去|喜欢上了|迷上|去吃|吃到|看了|玩完|考完|看完)/;
-function noteCallback(text){
+function noteCallback(text,srcWho){
   if(!text||typeof text!=="string")return;
   if(!CB_RE.test(text))return;
   if(!/我|咱|终于/.test(text))return;   /* 得是他自己的事，不是转述 */
@@ -1441,7 +1442,10 @@ function noteCallback(text){
   if(!Array.isArray(arr))arr=[];
   const now=Date.now(),clean=text.slice(0,60);
   if(arr.some(x=>x&&x.text===clean&&now-(x.at||0)<48*3600*1000))return;   /* 同一件事两天内不重复记 */
-  arr.push({text:clean,at:now,asked:false});
+  /* z138：出处同上——私聊里说的事只在私聊里旧事重提 */
+  const src=srcWho?"private":"group";
+  const who=srcWho?String(srcWho.name||""):"";
+  arr.push({text:clean,at:now,asked:false,src:src,who:who});
   if(arr.length>20)arr=arr.slice(-20);
   try{localStorage.setItem(LS_CB,JSON.stringify(arr));}catch(e){}
 }
@@ -1461,8 +1465,17 @@ function maybeOldThing(){
   const cands=arr.filter(x=>x&&!x.asked&&Date.now()-(x.at||0)>=20*3600*1000);
   if(!cands.length||Math.random()>=0.65)return;   /* 不是每次都提，没来由才像朋友 */
   const cb=cands[Math.floor(Math.random()*cands.length)];
-  const pool=members.filter(m=>m&&m.name);   /* 谁提起随缘，别老是一个人 */
-  const who=pool[Math.floor(Math.random()*pool.length)];
+  /* z138：同上——私聊的事只在私聊里旧事重提 */
+  let who=null,inPrivate=false;
+  if(cb.src==="private"&&cb.who){
+    const pm=members.find(m=>m&&m.name===cb.who);
+    if(!pm||privateWith!==pm)return;
+    who=pm;inPrivate=true;
+  }else{
+    if(privateWith)return;
+    const pool=members.filter(m=>m&&m.name);
+    who=pool[Math.floor(Math.random()*pool.length)];
+  }
   if(!who)return;
   markCbAsked(cb.at);
   const days=Math.max(1,Math.round((Date.now()-(cb.at||Date.now()))/86400000));
@@ -1470,11 +1483,18 @@ function maybeOldThing(){
   try{
     const lazy=aiMsgLazy(who);
     const sv=makeStreamView(who,lazy,who.name+"-callback");
-    callModel(who,prompt,[],{proactive:true},partial=>sv.push(partial)).then(reply=>{
+    callModel(who,prompt,[],{proactive:true,private:inPrivate},partial=>sv.push(partial)).then(reply=>{
       sv.finish(reply).then(sh=>{
         if(sh){sh.el.classList.add("spoke");setTimeout(()=>sh.el.classList.remove("spoke"),750);}
-        who.history.push({role:"assistant",content:reply,t:Date.now()});trimHist(who);
-        try{logFlow(who.name,reply);}catch(e){}
+        /* z138：私聊线写私聊记录，不进群历史、不进群流水 */
+        if(inPrivate){
+          if(!Array.isArray(who.private))who.private=[];
+          who.private.push({role:"assistant",content:reply,t:Date.now()});
+          if(who.private.length>40)who.private.splice(0,who.private.length-40);
+        }else{
+          who.history.push({role:"assistant",content:reply,t:Date.now()});trimHist(who);
+          try{logFlow(who.name,reply);}catch(e){}
+        }
         save();renderConvList();
       }).catch(()=>{});
     }).catch(e=>{try{console.warn("[小家] 旧事重提没回上：",e&&e.message);}catch(_){}});
@@ -1489,7 +1509,17 @@ function maybeProactiveGreet(){
   /* z128：按估好的dueAt判断"该问了"，不再用手动档位；旧记录没有dueAt就默认4小时后 */
   const due=arr.find(x=>x&&!x.asked&&Date.now()>=(x.dueAt||(x.at||0)+4*3600*1000));
   if(!due)return false;
-  const who=members.find(m=>m&&m.name==="Vesta")||members[0];
+  /* z138：私聊出处隔离——私聊的事只由当事那一位、只在用户开着那条私聊时问；
+     群里的事只在群聊视图问（用户开着私聊时不发群消息）。 */
+  let who=null,inPrivate=false;
+  if(due.src==="private"&&due.who){
+    const pm=members.find(m=>m&&m.name===due.who);
+    if(!pm||privateWith!==pm)return false;
+    who=pm;inPrivate=true;
+  }else{
+    if(privateWith)return false;
+    who=members.find(m=>m&&m.name==="Vesta")||members[0];
+  }
   if(!who)return false;
   markPendingAsked(due.at);   /* 先标记，就算这次没回上也不反复问 */
   const hrsAgo=Math.max(1,Math.round((Date.now()-(due.at||Date.now()))/3600000));
@@ -1500,11 +1530,18 @@ function maybeProactiveGreet(){
   try{
     const lazy=aiMsgLazy(who);
     const sv=makeStreamView(who,lazy,who.name+"-proactive");
-    callModel(who,prompt,[],{proactive:true},partial=>sv.push(partial)).then(reply=>{
+    callModel(who,prompt,[],{proactive:true,private:inPrivate},partial=>sv.push(partial)).then(reply=>{
       sv.finish(reply).then(sh=>{
         if(sh){sh.el.classList.add("spoke");setTimeout(()=>sh.el.classList.remove("spoke"),750);}
-        who.history.push({role:"assistant",content:reply,t:Date.now()});trimHist(who);
-        try{logFlow(who.name,reply);}catch(e){}
+        /* z138：私聊线写私聊记录，不进群历史、不进群流水 */
+        if(inPrivate){
+          if(!Array.isArray(who.private))who.private=[];
+          who.private.push({role:"assistant",content:reply,t:Date.now()});
+          if(who.private.length>40)who.private.splice(0,who.private.length-40);
+        }else{
+          who.history.push({role:"assistant",content:reply,t:Date.now()});trimHist(who);
+          try{logFlow(who.name,reply);}catch(e){}
+        }
         save();renderConvList();
       }).catch(()=>{});
     }).catch(e=>{try{console.warn("[小家] 主动关心没回上：",e&&e.message);}catch(_){}});
@@ -2282,13 +2319,15 @@ async function send(){
   }
   /* z89：不再自动切模型。只有你手动打开「深度思考」，才走人味大模型 + 认真提示词；
      平时一律快模型秒回，越短越有梗。isHeartfelt 只留一个用处：这句值不值得记进长期记忆。 */
-  notePendingFollowup(text);   /* z127：记住"要去面试/等结果"这类事，回头主动问——不碰记忆系统 */
-  noteCallback(text);          /* z129：记住他分享的爱好/生活事，过阵子顺嘴提起——只存原话，不编造 */
+  /* z138：记录带出处，私聊的事只在私聊里回访 */
+  notePendingFollowup(text,privateWith);
+  noteCallback(text,privateWith);
   const heardFeeling=isHeartfelt(text);
   /* z137: shared level object for this turn - dragging the slider mid-turn
      updates it, so replies not yet sent follow the new level. */
+  /* z138（小米纠正）：档位快照——本轮开跑那一刻的档位，整轮统一。
+     中途拉滑块碰不到这一轮；松手写 thinkLevel，下一轮 send() 重新拍快照才生效。 */
   const lvRef={v:thinkLevel};
-  turnLvRef=lvRef;
   /* z137: nonsense detection - when he babbles the model may only ask "?"
      or vibe along, never explain what he meant. */
   const nonsense=isNonsense(text);
@@ -2854,11 +2893,11 @@ function initThinkSheet(){
     const finalLv=lvFromRatio(lastRatio);
     const changed=finalLv!==thinkLevel;
     applyThinkLevel(finalLv);lastLv=finalLv;
-    /* z137: switching level mid-turn - what was already said stays,
-       but replies not yet sent use the new level. */
-    if(changed)turnLvSet(finalLv);
+    /* z138 (corrected): switching does NOT interrupt the running turn.
+       The turn finishes on the level it started with; the slider only
+       writes thinkLevel, which the NEXT turn picks up. */
     sysMsg("思考深度：「"+THINK_INFO[finalLv].name+"」"+(finalLv===3?"（会打开模型自己的思考，慢一些）":"")
-      +(changed&&busy?"　· 还没说出口的那几句已经按新档来了":""));
+      +(changed?"　· 下一轮对话生效":""));
   };
   let lastRatio=TS_POS[thinkLevel]/100;
   const start2=e=>{lastRatio=ratioFromX(e.clientX||0);start(e);};
