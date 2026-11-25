@@ -446,7 +446,7 @@ html,body{background:#ededed!important}
   }catch(e){}
 })();
 /* 版本号：每次改内容我都会改这个号，页面打开时自动探测更新 */
-const APP_VER="1.7.9";
+const APP_VER="1.8.0";
 /* ===== 自动更新探测：绕开浏览器缓存，发现新版就自动刷新一次 ===== */
 (function(){
   try{
@@ -1114,7 +1114,8 @@ function loadGist(){
   }catch(e){}
 }
 function trimHist(m,max){
-  max=max||10;
+  /* z151：重度档(3)多留一截旧账——上限 10→20；其他档维持 10。传了 max 就按传的来 */
+  if(!max)max=(typeof thinkLevel!=="undefined"&&thinkLevel>=3)?20:10;
   if(!m||!Array.isArray(m.history)||m.history.length<=max)return;
   const drop=m.history.splice(0,m.history.length-max);
   const said=drop.filter(h=>h.role==="user")
@@ -2203,7 +2204,7 @@ async function callModel(m,userText,atts,ctx,onChunk){
   const lv=(ctx&&ctx.lvRef&&typeof ctx.lvRef.v==="number")?ctx.lvRef.v
         :(ctx&&typeof ctx.lv==="number"?ctx.lv
         :(typeof thinkLevel!=="undefined"?thinkLevel:(heartfelt?2:0)));
-  /* z120/z137: 0/1 = fast model (reply/read-context), 2/3 = big model (advise/do-the-job) */
+  /* z151: 0/1 = fast model (quick reply/chat), 2/3 = full model (advise/do-the-job) */
   const useModel=(lv>=2)?MODEL_HEART:MODEL_FAST;
   const canSee=isVision(useModel);
   const parts=canSee?attParts(atts):[];
@@ -2214,13 +2215,13 @@ async function callModel(m,userText,atts,ctx,onChunk){
   /* z137: per-level params. 0=short+human 1=a bit longer 2=substantive 3=full job */
   const maxTok=[18,160,320,700][lv]||18;
   const temp=[1.15,0.9,0.85,0.75][lv]||1.15;
-  const deepOn=lv>=3;
-  /* z149：GLM-5.3 思考强制常开、enable_thinking 对它无效，默认拉满 → 随口一句话要想二三十秒。
-     实测改传 reasoning_effort：聊天三档 low（30秒→4秒，回复反而更有网感），重度档 max 保持深度。
+  const deepOn=lv>=2;
+  /* z151：GLM 思考强制常开、enable_thinking 无效。按档位分思考强度：
+     0=low（秒回 0.9秒）、1/2/3=high（1~3秒）。max 实测随口一句憋 23 秒，砍掉不用。
      Qwen/DeepSeek 老模型仍走 enable_thinking 开关，行为不变。 */
   const isGLM=/glm/i.test(String(useModel));
   const bodyObj={model:useModel,messages,temperature:temp,max_tokens:maxTok,
-    ...(isGLM?{reasoning_effort:deepOn?"max":"low"}:
+    ...(isGLM?{reasoning_effort:lv===0?"low":"high"}:
       ((/qwen|deepseek/i.test(String(useModel)))?{chat_template_kwargs:{enable_thinking:deepOn}}:{})),
     stream:true,stream_options:{include_usage:true}};
   /* 自动重试：短时限流/服务器忙(5xx)/超时/断网 → 等一两秒再来，最多3次。
