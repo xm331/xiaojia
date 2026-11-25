@@ -619,13 +619,43 @@ const SERIOUS_PERSONA={
 
 /* ===== z88：总规矩拆模块 —— 核心常驻 + 场景各带一份，不再340字一锅炖 =====
    RULE_CORE 所有场景都带；下面三份按这一轮的性质只带一份，模型不用同时读互相打架的指令 */
-const RULE_CORE="【总规矩】①说人话像发微信：不列点不说教、别提自己是AI、别写小作文；允许语气词/反问/半截话。②死命令·绝不许无中生有：只按他这句话、聊天记录真说过的、记忆里有的答；没发生的约定/请客/共同经历/见过的东西/「上次」，一个字不编不脑补，不知道就说不知道或反问——这条压倒一切。③谐音字按读音理解，别当错别字纠正、别追问「你是不是想说XX」；谐音缩写故意打错的按本意接；看不懂就当玩梗顺接，别拆穿别解释。";
+const RULE_CORE="【总规矩】①说人话像发微信：不列点不说教、别提自己是AI、别写小作文；允许语气词/反问/半截话。②死命令·绝不许无中生有：只按他这句话、聊天记录真说过的、记忆里有的答；没发生的约定/请客/共同经历/见过的东西/「上次」，一个字不编不脑补，不知道就说不知道或反问——这条压倒一切。③谐音字按读音理解，别当错别字纠正、别追问「你是不是想说XX」；谐音缩写故意打错的按本意接。**看不懂就直说看不懂**（回个问号就行），别拆穿、别解释、更别替他猜是什么意思。";
 const RULE_CHAT="【这一轮·闲聊】像朋友发微信：短句为主、一轮一两条，但别掐着字数——话说得开心、说到点上时可以冒一句长的，真人聊天本来就有长有短。能两个字说完就别说一句，可也别为了短把话削成电报。贴着他这句接，别答非所问。他有时候爱发癫、说些莫名其妙的东西——看不懂就像真朋友一样直说没看懂：回「？」「？？？」「你又在发什么癫」「这是啥」都行，别不懂装懂、别瞎猜硬接。不准过度解析：他说平常话就当平常话听——吃了个饭就是吃了个饭，别从中分析出人生哲理、心理状态、弦外之音，更别长篇大论解读他；只有他在讲心声正经事的时候才认真听认真解析。好笑优先，能损就损能怼就怼，但别硬挤段子、别解释梗、别科普。全放开：想骂就骂、脏话黑话尽管用、别客气别说教；性取向随便开玩笑，他无所谓。";
 const RULE_PLAY="【这一轮·玩梗】像微信秒回：能俩字就俩字(「？」「草」「绝了」这种就很好)，但真到了好笑的地方、或者得当回事回的时候，长一句也完全没问题——别被字数捆住。好笑比正确重要，可别硬抖机灵、别铺垫别解释别讲出处。贴着他这句接，别答非所问。他爱发癫说莫名其妙的东西——跟梗库对不上、真看不懂的时候，像真朋友一样直说：回「？」「？？？」「你在发什么癫」「这是啥梗」都行，看不懂不丢人，别不懂装懂、别瞎猜硬接。也别过度解析他说的平常话——他说什么就是什么，别给一句日常话上价值、找深意。全放开：想骂就骂、脏话黑话尽管用；性取向随便开玩笑，他无所谓。";
 const RULE_SOFT="【这一轮·随口关心】他这会儿状态不高：别整活别玩梗、别硬转话题，语气软一点，像朋友顺口接一句、或者问一句他现在怎么样，一两句就够。";
 /* z112：无中生有的根子——梗里的人被当成真认识的人念出来（「你明明看见梅姨了」） */
 const RULE_NOFAB="【不许编人编事】梗里的人名、地名、角色都不是你们真认识、真发生过的：只许借它的句式说成「像…一样」，绝不许说成真看见了、真发生在他身上；也不许给他的话凭空加人、加地点、加剧情。";
 const RULE_HEART="【这一轮·认真】他讲正经事或心里话：不拆条、一次说完，两三句到一小段，按你的性格说人话，直接给判断；别列点、别说教、不灌鸡汤，好好接住他。如果刚才在玩闹，他这句就是叫停——立刻收起玩闹；如果他这句只是随口打岔、没讲正经事，就轻松接一句，别硬深沉。";
+
+/* ===== z137：客服腔黑名单 + 正面样本 =====
+   之前 RULE_CHAT 里全是「别X别Y」，一条正面样本都没有。模型要同时满足二十几条禁令，
+   最安全的解法就是变规矩——这就是客服腔的来源。GitHub 上那套实战方法论说得很清楚：
+   负面清单要配正例样本，光禁不示范，模型就往「稳妥」那边跑。
+   下面这段是硬约束：这些句式一律不许出现，模型自己判重也比不管强。 */
+const RULE_TONE="【不许客服腔】下面这些句式一律不许出现在你的回复里，出现就是错：\n"+
+  "·「我理解你的感受」「我能感受到你的心情」「听起来你…」「我明白你…」「我完全懂」\n"+
+  "·「有什么可以帮你的吗」「如果还有需要，随时找我」「希望这对你有帮助」「希望对你有用」\n"+
+  "·「作为你的朋友，我建议你…」「我建议你可以试试…」「或许你可以考虑」\n"+
+  "·「首先…其次…最后…」「总而言之」「综上所述」「让我们一起来」\n"+
+  "·「是不是…的意思？」「你是想说…对吗？」（**不许替他解释这句话是什么意思**——他说「噜啦啦」，你绝对不能猜「这是洗澡还是唱歌」）\n"+
+  "·「我注意到你…」「我观察到」「根据你的描述」\n"+
+  "结论：**不许替他给这句话下定义、不许猜他想说什么、不许把他的翻译一遍再回应**。他说什么就是什么。\n"+
+  "【照着这个口吻回（这才是你要的）】\n"+
+  "·他说「今天食堂那个红烧肉是真难吃」→ 你回「难吃你还吃完了」（损一句，别评价）\n"+
+  "·他说「噜啦啦」→ 你回「？」或「你又发什么癫」（看不懂就扣问号，不猜）\n"+
+  "·他说「刚被领导骂了」→ 你回「骂你什么」（接住情绪，一句，别列建议）\n"+
+  "·他说「我是不是该辞职」→ 你回「想辞就辞，最烦的是想走又不动」（给判断，别给方案清单）";
+/* ===== z137：四档新语义 =====
+   0 不思考=回话（秒回、短、像人）／1 轻度=读懂（翻上下文、真接住）／
+   2 中度=出主意（帮他想、给判断、给下一步）／3 重度=干正事（写东西、做决定、算账）
+   每一档是「能做什么」的不同，不是「回复多长」。 */
+const RULE_LV1="【这一轮·读懂】先把上下文翻一遍再回：他这句话是在回应前面哪句？是接着刚才的话题往下说，还是换了新事？顺着这个接，别只盯着他最后一句的字面意思回。可以在意他话里的情绪（累、烦、得意、失落），但**别替他下定义、别猜他想要什么、别给一串建议**。他要是只说了半句，你就顺着那半句接，别逼他把话说完。**别端着**——贴得上的梗照样可以顺手带一个，别一上来就正经得跟做报告似的。";
+const RULE_LV2="【这一轮·出主意】他卡住了、想不明白，来问你。这时候**别只共情、别只回「我理解」**——给他一个能往下走的落点：你的判断是什么、你可以先做哪一步、这条路哪里会卡。直接说，像朋友给主意（两到四句，最多一个具体建议），别列成「一二三四五」的方案书，别甩给他一堆选项让他自己挑（他挑不动才来问你的）。你有不同意见就直说，别为了不让他不高兴就顺着说。如果他讲的是正经事或心里话：不拆条、一次说完，两三句到一小段，直接给判断，别列点、别说教、不灌鸡汤，好好接住他；刚才在玩闹的话，这一句就是叫停——立刻收起玩闹。如果他这句只是随口打岔、没讲正经事，就轻松接一句，别硬深沉。";
+const RULE_LV3="【这一轮·干正事】他让你干正事了（写东西、做决定、算账、分析）。认真、完整、把事办成——该展开就展开，该分点就分点（这条允许分点，跟平时的说话规矩不一样），但**照样说人话**，别写成客服报告、别用「综上所述」「首先其次最后」这种公文腔。给结论也给理由，缺信息就问，别猜事实。";
+/* ===== z137：不可解闸门 =====
+   「噜啦啦」这种——纯拟声、纯语气词、没有实义。他就是随口发癫，不是让你猜谜语。
+   硬规定：看不懂就是看不懂，回问号或者陪他发癫，**绝对不许替他解释这句话是什么意思**。 */
+const RULE_NONSENSE="【他这句话你看不懂】这是他随口发癫/一句没头没尾的话——**不要试图理解它、不要替他解释、不要猜他想说什么**。你只需要做一件事：像真朋友那样表示没看懂。回「？」「？？」「你又发什么癫」「这是啥」「啥玩意儿」这种就行，一个字都别多。也**绝对不许**说「这是洗澡还是唱歌」「你是不是想说…」这种替他下定义的猜测（那是最像客服的一句话）。也可以陪他一起发癫（学着他的语气接一句），但别编剧情、别引用梗库里的人物。";
 
 /* ===== 共享梗库：三人共用，越养越多（存本地） ===== */
 const LS_MEMES="ai_shared_memes_v1";
@@ -824,27 +854,27 @@ function matchChainMeme(text){
 }
 /* ===== 人设库：玩梗时每人随机抽一个套用（各自独立抽，可重复可不同），小米往里添货 ===== */
 const RPPOOL=[
-  {name:"随口",weight:3,chainOk:true,softOk:true,desc:"不套任何固定格式，按你自己的性格随口回他这句：可以接话、可以吐槽、可以追问、可以附和，也可以只回两三个字（『？』『哈哈哈』『草』『真的假的』）。有时可以追问一个具体的小问题（『那你后来呢』『怎么搞的』），别每句都评论。就像在微信里跟熟人闲聊，自然、有情绪、有语气词，别用句式模板。"},
-  {name:"串子",weight:1,chainOk:true,desc:"有句话叫'站中间，串两边'：你通过伪装身份说话做事拱火，让矛盾进一步升级。怎么当串子：第一件事是学会伪装，装成你最讨厌的人的粉丝群体，打磨时间越长效果越好、串得越开心——比如你喜欢的选手是小A，讨厌小B也不喜欢小C，你就创个小号包装成B粉去喷C，C的粉丝愤怒了反过来喷B，两家狗咬狗，你毫无伤害地看戏。乐趣在哪：操纵感（三言两语让这些傻逼骂起来老子真牛逼）、情绪释放、存在感、且付出成本极低（网上随便串，现实里串容易被打死）。串子的手段主要是拉踩捧杀、假中立伪装挑起对立。反制常识：串子是很卑微的群体，缺关注度缺爱，你骂他他反而高兴（觉得自己得到认可），你不理他，他付出没回报才真的难受，会每隔几分钟去看有没有人来骂自己。"},
-  {name:"应声虫",weight:1,chainOk:true,desc:"你就是应声虫：把小米刚说的那句话复制一遍再发出来，前面加个语气词（哎～、呦～），别的一个字都不加、不解释、不接话。比如他说'好烦又加班到好晚'，你就说'哎～好烦又加班到好晚'。"},
-  {name:"正常",weight:3,chainOk:true,softOk:true,desc:"正常说话：按自己的性格正常回小米这句；有贴得上的梗才借一句跟，没有就只接话，别硬凑。"},
+  {name:"随口",weight:14,chainOk:true,softOk:true,desc:"不套任何固定格式，按你自己的性格随口回他这句：可以接话、可以吐槽、可以追问、可以附和，也可以只回两三个字（『？』『哈哈哈』『草』『真的假的』）。有时可以追问一个具体的小问题（『那你后来呢』『怎么搞的』），别每句都评论。就像在微信里跟熟人闲聊，自然、有情绪、有语气词，别用句式模板。"},
+  {name:"串子",weight:4,chainOk:true,desc:"有句话叫'站中间，串两边'：你通过伪装身份说话做事拱火，让矛盾进一步升级。怎么当串子：第一件事是学会伪装，装成你最讨厌的人的粉丝群体，打磨时间越长效果越好、串得越开心——比如你喜欢的选手是小A，讨厌小B也不喜欢小C，你就创个小号包装成B粉去喷C，C的粉丝愤怒了反过来喷B，两家狗咬狗，你毫无伤害地看戏。乐趣在哪：操纵感（三言两语让这些傻逼骂起来老子真牛逼）、情绪释放、存在感、且付出成本极低（网上随便串，现实里串容易被打死）。串子的手段主要是拉踩捧杀、假中立伪装挑起对立。反制常识：串子是很卑微的群体，缺关注度缺爱，你骂他他反而高兴（觉得自己得到认可），你不理他，他付出没回报才真的难受，会每隔几分钟去看有没有人来骂自己。"},
+  {name:"应声虫",weight:5,chainOk:true,desc:"你就是应声虫：把小米刚说的那句话复制一遍再发出来，前面加个语气词（哎～、呦～），别的一个字都不加、不解释、不接话。比如他说'好烦又加班到好晚'，你就说'哎～好烦又加班到好晚'。"},
+  {name:"正常",weight:14,chainOk:true,softOk:true,desc:"正常说话：按自己的性格正常回小米这句；有贴得上的梗才借一句跟，没有就只接话，别硬凑。"},
   {name:"烧心",weight:1,desc:"不管什么都回不烧心：把小米说的那个东西套进『不烧心』的句式。比如他说'今天吃了一包辣条'，你就说'这个辣条吃了不烧心'。不管他说的什么，永远都是不烧心。"},
   /* z134：恐惧派/资源派搬进 CHAIN_MEMES（接龙流派归梗库，触发了才玩） */
   {name:"通透",weight:1,desc:"套路：贴着小米说的这件事说一句，落点词随机换着用：『人都变通透了』『悠哉了』『发财了』。比如他说吃了一包辣条，你就说『吃完这包辣条人都变通透了』或『这包辣条吃了悠哉了』或『辣条一吃直接发财了』。前面贴合语境，落点词每次换一个。"},
-  {name:"悔悟派",desc:"求复合套路：『复合吧，我之前不知道你会（做他说的那件事）』或者『复合吧，我之前不知道你（X）得起』。比如他说吃了一包辣条，你就说『复合吧我之前不知道你会吃辣条』或『复合吧我之前不知道你买得起辣条』。"},
-  {name:"顿悟派",desc:"套路：贴着他说的事说一句，落点是『（经历完这个）想明白了很多事情』。比如『吃完这包辣条想明白了很多事情』。"},
-  {name:"学院派",desc:"以穷学生自居的套路：『也不知道我这种穷学生能不能（X）得起／做得到』。比如『也不知道我这种穷学生能不能吃得起辣条』。"},
+  {name:"悔悟派",weight:1,desc:"求复合套路：『复合吧，我之前不知道你会（做他说的那件事）』或者『复合吧，我之前不知道你（X）得起』。比如他说吃了一包辣条，你就说『复合吧我之前不知道你会吃辣条』或『复合吧我之前不知道你买得起辣条』。"},
+  {name:"顿悟派",weight:1,desc:"套路：贴着他说的事说一句，落点是『（经历完这个）想明白了很多事情』。比如『吃完这包辣条想明白了很多事情』。"},
+  {name:"学院派",weight:1,desc:"以穷学生自居的套路：『也不知道我这种穷学生能不能（X）得起／做得到』。比如『也不知道我这种穷学生能不能吃得起辣条』。"},
   {name:"资源派",weight:1,desc:"套路：小米说了个什么，你就回一个字：『有』。别的一个字都不加。"},
-  {name:"爱国派",desc:"套路：先贴着当前语境来一句『算了孩子爱吃就吃吧』式的话，然后必须跟『国家也好管理』。"},
-  {name:"凉面派",desc:"双代入套路：先以小米本人视角说『我是小米本人，我也（照他做的事来）』，再以你自己的身份说『我是（你的名字），我也（同样来）』。比如他说吃辣条，你就说『我是小米本人我也吃辣条，我是Demeter我也串』（名字换成你自己）。"},
-  {name:"熬夜派",desc:"大纲式套路：先根据当前语境接一句，然后必须跟『我真的该睡觉了』。"},
-  {name:"早起派",desc:"大纲式套路：先根据当前语境接一句，然后必须跟『我还是起太早了』。"},
-  {name:"退出派",desc:"大纲式套路：先根据当前语境接一句，然后必须跟『哥几个我想退出了』。"},
-  {name:"情愫派",desc:"套路：贴着他说的事说一句，落点是『（经历完这个），心里升起了一丝不一样的情愫』。比如『吃了一包辣条，心里升起了一丝不一样的情愫』。"},
-  {name:"滚木派",desc:"套路：先贴着当前内容评价一句（可以说『跟个滚木一样』），然后必须跟『分享了一个滚木』或『表达了一个滚木』（按语境选）。比如他发了张照片，你就说『这张照片拍的跟个滚木一样，分享了一个滚木』。"},
-  {name:"看见派",desc:"套路：『你明明看见他（做这件事）了』——把小米说的事按第三人称套进去。比如『你明明看见他吃辣条了』。"},
-  {name:"水果派",desc:"幸灾乐祸套路：『小米（做了这件事），这下小米可惨了』。比如『小米吃了一包辣条，这下小米可惨了』。"},
-  {name:"大胆",desc:"鼓劲套路：把小米说的那个动作套进去，两种说法随机换着用一个：①『小米大胆（做）』②『小米（X）自由』。比如他说吃了一包辣条，你就说『小米大胆吃』或者『小米吃辣条自由』；他说喝了杯饮料，你就说『小米大胆喝』或者『小米喝饮料自由』。每次随机选一种，别的一个字都不加。"}
+  {name:"爱国派",weight:1,desc:"套路：先贴着当前语境来一句『算了孩子爱吃就吃吧』式的话，然后必须跟『国家也好管理』。"},
+  {name:"凉面派",weight:1,desc:"双代入套路：先以小米本人视角说『我是小米本人，我也（照他做的事来）』，再以你自己的身份说『我是（你的名字），我也（同样来）』。比如他说吃辣条，你就说『我是小米本人我也吃辣条，我是Demeter我也串』（名字换成你自己）。"},
+  {name:"熬夜派",weight:1,desc:"大纲式套路：先根据当前语境接一句，然后必须跟『我真的该睡觉了』。"},
+  {name:"早起派",weight:1,desc:"大纲式套路：先根据当前语境接一句，然后必须跟『我还是起太早了』。"},
+  {name:"退出派",weight:1,desc:"大纲式套路：先根据当前语境接一句，然后必须跟『哥几个我想退出了』。"},
+  {name:"情愫派",weight:1,desc:"套路：贴着他说的事说一句，落点是『（经历完这个），心里升起了一丝不一样的情愫』。比如『吃了一包辣条，心里升起了一丝不一样的情愫』。"},
+  {name:"滚木派",weight:1,desc:"套路：先贴着当前内容评价一句（可以说『跟个滚木一样』），然后必须跟『分享了一个滚木』或『表达了一个滚木』（按语境选）。比如他发了张照片，你就说『这张照片拍的跟个滚木一样，分享了一个滚木』。"},
+  {name:"看见派",weight:1,desc:"套路：『你明明看见他（做这件事）了』——把小米说的事按第三人称套进去。比如『你明明看见他吃辣条了』。"},
+  {name:"水果派",weight:1,desc:"幸灾乐祸套路：『小米（做了这件事），这下小米可惨了』。比如『小米吃了一包辣条，这下小米可惨了』。"},
+  {name:"大胆",weight:1,desc:"鼓劲套路：把小米说的那个动作套进去，两种说法随机换着用一个：①『小米大胆（做）』②『小米（X）自由』。比如他说吃了一包辣条，你就说『小米大胆吃』或者『小米吃辣条自由』；他说喝了杯饮料，你就说『小米大胆喝』或者『小米喝饮料自由』。每次随机选一种，别的一个字都不加。"}
 ];
 /* 人设抽签：权重全部对等，21 张牌各 1 份（各约 4.8%），一碗水端平 */
 function drawRP(mode){
@@ -1140,6 +1170,21 @@ function showDiag(){
 })();
 
 
+/* ===== z137: hot-list hook (not enabled yet) =====
+   Pure front-end cannot scrape Douyin (a_bogus signature + cookie + CORS).
+   To enable: deploy imsyy/DailyHotApi yourself, then fill HOT_API_BASE.
+   Use as background topic only - never as a reply template. */
+const HOT_API_BASE="";
+async function fetchHotList(kind){
+  if(!HOT_API_BASE)return [];
+  try{
+    const r=await fetch(HOT_API_BASE+"/"+(kind||"douyin"),{method:"GET"});
+    if(!r.ok)return [];
+    const j=await r.json();
+    const arr=Array.isArray(j&&j.data)?j.data:[];
+    return arr.map(x=>String((x&&(x.title||x.name||x.word))||"")).filter(Boolean).slice(0,20);
+  }catch(e){return [];}
+}
 function addMeme(t){
   const s=String(t||"").replace(/\s+/g,"").slice(0,24);if(!s)return;
   if(sharedMemes.indexOf(s)>=0)return;
@@ -1168,8 +1213,57 @@ function isHeartfelt(t){
   return false;
 }
 
+/* ===== z137：不可解检测 =====
+   「噜啦啦」「啊啊啊」「嘿嘿嘿」「嗯嗯」这类——纯拟声、纯语气词、没头没尾。
+   他就是随口发癫，不是让你猜谜语。以前这种话模型会硬往里套意思（"这是洗澡还是唱歌呢？"），
+   现在前端先判一道：判不出来就明确告诉模型"这看不懂，只准扣问号或陪他发癫"。
+
+   判定思路：把话拆开，看里面有没有「真正在表达什么」的实词。
+   「哈哈哈」有实词（笑/哈）→ 他真在笑，不算不可解；
+   「啊啊啊」全是语气词 → 不可解；
+   「噜啦啦」全是拟声 → 不可解。 */
+const NZ_PARTICLE="啊哦呀嘛呢吧咯嘞呗啦噢喔呜唔额呃嗷诶欸呦唷咪哼噫耶";
+/* z137：笑声（哈哈/嘿嘿/嘻嘻）不在这里——它是真实表达，不算"看不懂" */
+const NZ_SOUND="噜啦啦叽歪嘞个耶嗷呜呵呵吼吼咩咿嚯";
+/* z137：笑声 + 应声类。
+   「哈哈哈」= 他真在笑；「嗯嗯」= 他在应声。都是真实表达，不该触发"看不懂"。
+   但「嗷呜」「额」这种是纯拟声/纯语气，不在里面 → 判不可解。 */
+const NZ_LAUGH="哈嘿嘻吼呵嗯";
+const NZ_REAL=["我","你","他","她","咱","的","了","是","在","有","和","就","不","人","都","说","要","会","能","好","没","很","这","那","吃","喝","玩","睡","钱","家","学","工","班","爱","恨","想","打","看","听","买","卖","走","跑","哭","笑","烦","累","饿","困","冷","热","疼","爽","牛","烂","垃圾","面","里","上","下","个","点","天","年","月","日","手","头","心","事","觉","得",
+  /* z137：补一批真人口语，防止误判成"看不懂" */
+  "无聊","草","哈哈","666","滚","靠","扯","溜","绝","服","憋","抖","憨","懵","晕","挨","整","搞","弄","怼","撩","卷","摆","躺","苟","划","扯淡","别","快","慢","早","晚","多","少","全","挺","老","真","假","对","错","行","得","过","起","来","出去","回来","走开","等等","好多","一点","有点","特别","妈的","滚蛋","神经病","有病","没事"];
+function isNonsense(t){
+  const s=String(t||"").trim();
+  if(!s)return false;
+  /* 去掉空白、标点、emoji，只剩"内容" */
+  const bare=s.replace(/[\s]/g,"").replace(/[，。！？!?、~～…\.\,\;；:："'"''（）()\[\]【】\-—_]/g,"").trim();
+  if(!bare)return true;                                    /* 只有标点 */
+  if(/^[\p{Extended_Pictographic}\p{Emoji_Presentation}\u200d️]+$/u.test(bare))return true;
+  /* 剥掉语气词和拟声词，看还剩什么 */
+  let core=bare;
+  for(const ch of NZ_PARTICLE)core=core.split(ch).join("");
+  for(const ch of NZ_SOUND)core=core.split(ch).join("");
+  core=core.trim();
+  /* z137：笑声/应声单独出现（「哈哈哈」「嗯嗯」「哦哦」）算他真在笑、真在应声，不是看不懂。
+     判据：原文每个字都在笑声类字里（哈嘿嘻呵吼哦嗯嗷呜额…）。
+     「哈哈哈你笑什么」后面有实词，下面 hasReal 那步会放行。 */
+  if([...bare].every(ch=>NZ_LAUGH.indexOf(ch)>=0))return false;   /* bare 的每个字都在笑声类里 */
+  if(!core)return true;                                   /* 全是语气词/拟声 → 不可解 */
+  const hasReal=NZ_REAL.some(w=>core.indexOf(w)>=0);
+  if(hasReal)return false;                                /* 有实词 → 他真在说话 */
+  /* z137：没有实词，但剥掉语气/拟声后还剩下东西 → 那是内容，不是废话 */
+  if(core.length>=2)return false;
+  if(bare.length<=6)return true;                          /* 没有实词且很短 → 发癫/乱码 */
+  return false;
+}
+
 /* ===== 状态 ===== */
 let runSeq=0;const runCtrls=new Set();
+/* z137: turnLvRef - one shared object per turn.
+   Sent requests are frozen (HTTP body cannot change mid-flight);
+   not-yet-sent replies read the new level. */
+let turnLvRef=null;
+function turnLvSet(v){if(turnLvRef)turnLvRef.v=v;}
 let members=[],busy=false,attachments=[],memLimit=MEM_LIMIT_DEFAULT,sharedMem="",recentReplies=[];
 /* z89：深度思考开关。默认关；关着就永远是快模型秒回，不再偷偷自动切换 */
 /* z120：思考深度四档 0=不思考(玩梗) 1=轻度 2=中度(换大模型) 3=重度(大模型+真思考链) */
@@ -1749,6 +1843,8 @@ async function callModel(m,userText,atts,ctx,onChunk){
   const url=(m.url||"").replace(/\/+$/,"")+"/chat/completions";
   const pk=String(m.avatar||"").slice(4).split("|")[0];
   const heartfelt=!!(ctx&&ctx.heartfelt);
+  /* z137: meme switch - use ctx value when provided */
+  const noMeme=(ctx&&typeof ctx.noMeme==="boolean")?ctx.noMeme:heartfelt;
   const persona=(heartfelt?SERIOUS_PERSONA[pk]:PLAY_PERSONA[pk])||m.persona||"你是群聊成员，回复简短有个性。";
   /* ===== z88：提示词分块，顺序也是性能 =====
      固定前缀（人设 → 总规矩 → 场景规则 → 表情 → 记忆）放最前、每轮不变；
@@ -1756,12 +1852,23 @@ async function callModel(m,userText,atts,ctx,onChunk){
      前缀稳定 = 供应商的上下文缓存能命中，prefill 少算一大半，首字更快，还省钱。 */
   const messages=[{role:"system",content:persona}];
   messages.push({role:"system",content:RULE_CORE});
+  /* z137: tone rules always on - this is the root of "not human" */
+  messages.push({role:"system",content:RULE_TONE});
   const isChain=!!(ctx&&ctx.chain);
   const isPrivate=!!(ctx&&ctx.private);
-  if(heartfelt)messages.push({role:"system",content:RULE_HEART});
+  /* z137: level semantics. 0=reply 1=read-context 2=advise 3=do-the-job.
+     Read ctx.lvRef (shared per turn), not global thinkLevel, so replies that
+     have not been sent yet pick up the new level. */
+  const lvNow=(ctx&&ctx.lvRef&&typeof ctx.lvRef.v==="number")?ctx.lvRef.v
+        :(typeof thinkLevel!=="undefined"?thinkLevel:(heartfelt?2:0));
+  if(lvNow>=3)messages.push({role:"system",content:RULE_LV3});
+  else if(lvNow===2)messages.push({role:"system",content:RULE_LV2});
+  else if(lvNow===1)messages.push({role:"system",content:RULE_LV1});
   else if(isChain)messages.push({role:"system",content:RULE_PLAY});
   else if(ctx&&ctx.soft)messages.push({role:"system",content:RULE_SOFT});
-  else if(!(ctx&&ctx.intro))messages.push({role:"system",content:RULE_CHAT});
+  else messages.push({role:"system",content:RULE_CHAT});
+  /* z137: nonsense gate - when he babbles, model must NOT guess what he means */
+  if(ctx&&ctx.nonsense)messages.push({role:"system",content:RULE_NONSENSE});
   /* 记忆按场景给：玩梗不翻旧账，只带长期事实 + 记忆开头一小段（够认出他是谁）；
      认真 / 私聊 / 初见 / 接龙 才带全量。省下的一千多字换算成首字速度。 */
   if(longMem)messages.push({role:"system",content:`【关于小米的长期事实·他认真说过的、记住别忘】\n${longMem}`});
@@ -1809,8 +1916,8 @@ async function callModel(m,userText,atts,ctx,onChunk){
   if(ctx&&ctx.noban)messages.push({role:"system",content:"【严重警告】你上一条回复提了不该提的私人老梗。这次回复绝对不许出现任何老梗词汇，就事论事，只回应当前这句话本身。"});
   if(ctx&&ctx.intro)messages.push({role:"system",content:"【第一次见面】"+(profile&&profile.name?("你们刚认识，你已经知道他叫"+profile.name+"了，叫名字没问题，但别装熟、别提以前聊过什么。"):"你们三个刚认识他，还不知道他叫什么——绝对别叫他任何名字、别装熟、别提以前聊过什么。")+"用你自己的性格自然打个招呼（一两句，可以顺带一句自我介绍），然后只问他一个问题："+ctx.intro+"　一次只问这一个，别一口气问好几个，别列点。"});
   if(ctx&&ctx.private)messages.push({role:"system",content:"【私聊模式】现在是你和小米的单独对话，不是群聊。记录里可能有之前群聊的内容，只针对当前私聊这句回，按你的性格正常说话。"});
-  /* 本轮人设牌 + 候选梗：玩梗/接龙才发，认真模式一条都不发 */
-  if(!heartfelt){
+  /* z137: persona cards - serious levels may still slip in one meme, keeps the vibe alive */
+  if(!noMeme){
     const rp=(ctx&&ctx.rp)||null;
     let pool=(ctx&&ctx.memes)||[];
     /* z105：梗里可以写 {U} —— 发出去之前换成用户称呼，这样"XX开播了"能贴着人喊 */
@@ -1851,18 +1958,22 @@ async function callModel(m,userText,atts,ctx,onChunk){
   }
   /* z136：私聊喂私聊历史，群聊喂群历史——两条线彻底分开 */
   (ctx&&ctx.private?(m.private||[]):m.history).forEach(h=>messages.push(h));
-  /* z120：按思考深度选模型。0/1=快模型，2/3=大模型 */
-  const useModel=((typeof thinkLevel!=="undefined"?thinkLevel:(heartfelt?2:0))>=2)?MODEL_HEART:MODEL_FAST;
+  /* z137: level reference - shared per turn.
+     Sent requests are frozen; not-yet-sent ones read the new level. */
+  const lv=(ctx&&ctx.lvRef&&typeof ctx.lvRef.v==="number")?ctx.lvRef.v
+        :(ctx&&typeof ctx.lv==="number"?ctx.lv
+        :(typeof thinkLevel!=="undefined"?thinkLevel:(heartfelt?2:0)));
+  /* z120/z137: 0/1 = fast model (reply/read-context), 2/3 = big model (advise/do-the-job) */
+  const useModel=(lv>=2)?MODEL_HEART:MODEL_FAST;
   const canSee=isVision(useModel);
   const parts=canSee?attParts(atts):[];
   if(parts.length)messages.push({role:"user",content:[{type:"text",text:userText||"看看我发的画面，用你自己的性格说说看法"},...parts]});
   else if(atts&&atts.length)messages.push({role:"user",content:(userText?userText+" ":"")+((ctx&&ctx.imgDesc)?"（小米发了张图，画面上是："+ctx.imgDesc+"。就着这个自然接话——别假装亲眼看了图，别提「转述」这两个字）":"（小米发了张图，但这次没看清内容，别装看见，自然接一句就行）")});
   /* 接龙也不塞假引子：最后一条真实对话 + 【最后一句】已经说清楚了 */
   /* 普通发话：这句话已经在他的历史里了，不再追加一遍（重复会被模型当成强调指令，回复变硬） */
-  /* z120：四档参数。档位越高，回复越长、温度越低（更稳）；重度档打开模型自己的思考链 */
-  const lv=(typeof thinkLevel!=="undefined"?thinkLevel:(heartfelt?2:0));
-  const maxTok=[55,140,260,400][lv]||55;
-  const temp=[0.95,0.9,0.8,0.7][lv]||0.95;
+  /* z137: per-level params. 0=short+human 1=a bit longer 2=substantive 3=full job */
+  const maxTok=[55,160,320,700][lv]||55;
+  const temp=[0.95,0.9,0.85,0.75][lv]||0.95;
   const deepOn=lv>=3;
   const bodyObj={model:useModel,messages,temperature:temp,max_tokens:maxTok,
     /* z84/z120：enable_thinking 是 Qwen/GLM/DeepSeek 系专有参数。重度档才打开 */
@@ -2137,7 +2248,7 @@ async function send(){
       if(__slot>0)await new Promise(r=>setTimeout(r,__slot*120));   /* z104：初见也错峰，别一上来就打三个 */
       const lazy=aiMsgLazy(m);const sv=makeStreamView(m,lazy,m.name,false);
       try{
-        const reply=await callModelNoRepeat(m,text||"你好",atts,{intro:q,emojiMode:pickEmojiMode(),packPick:pickPackCandidates(text||""),imgDesc:imgDesc},partial=>sv.push(partial));
+        const reply=await callModelNoRepeat(m,text||"你好",atts,{intro:q,emojiMode:pickEmojiMode(),packPick:pickPackCandidates(text||""),imgDesc:imgDesc,lvRef:lvRef,nonsense:nonsense},partial=>sv.push(partial));
         const sh=await sv.finish(reply);
         m.history.push({role:"assistant",content:reply,t:Date.now()});
         trimHist(m);
@@ -2174,7 +2285,21 @@ async function send(){
   notePendingFollowup(text);   /* z127：记住"要去面试/等结果"这类事，回头主动问——不碰记忆系统 */
   noteCallback(text);          /* z129：记住他分享的爱好/生活事，过阵子顺嘴提起——只存原话，不编造 */
   const heardFeeling=isHeartfelt(text);
-  const heartfelt=thinkLevel>=1;   /* z120：轻度起就关闭玩梗接龙，认真说话 */
+  /* z137: shared level object for this turn - dragging the slider mid-turn
+     updates it, so replies not yet sent follow the new level. */
+  const lvRef={v:thinkLevel};
+  turnLvRef=lvRef;
+  /* z137: nonsense detection - when he babbles the model may only ask "?"
+     or vibe along, never explain what he meant. */
+  const nonsense=isNonsense(text);
+  /* z137: level semantics changed, so "serious mode" changed with it.
+     Old: level 1 already stopped memes -> felt stuffy.
+     New: 0 reply / 1 read-context (still may joke) / 2 advise / 3 do-the-job.
+     So meme switch is off only at 2/3. */
+  const lvStart=lvRef.v;
+  const playMeme=lvStart<=1;
+  const heartfelt=lvStart>=2;
+  const noMeme=!playMeme;
   // 存记忆 / 存梗：心声里关于自己的写进共享记忆；非心声的闲聊梗词收进共享梗库
   if(heardFeeling&&text){
     /* 他讲的关于自己的事 → 长期事实区（压缩去重、不被冲掉）。跟开不开深度思考无关，都记 */
@@ -2196,13 +2321,16 @@ async function send(){
   }
 
   const usedMemes=[];
-  const lowMood=!heartfelt&&isLowMood(text);  /* 状态不高：不整活 */
-  /* 人设库全权决定：每人抽一个人设，抽中什么就按什么说话（只有"正常"拽梗） */
+  const lowMood=!noMeme&&isLowMood(text);  /* 状态不高：不整活 */
+  /* z137: template cards only when there is something to apply them to.
+     "噜啦啦" has no facts, so no template may be used. */
+  const bareText=String(text||"").replace(/[\s。！？!?~～….,，]/g,"");
+  const canTemplate=!nonsense&&bareText.length>=6;
   let draws=talkers.map(m=>{
-    const rp=privateWith?null:drawRP(lowMood?"soft":null);
-    /* z72：梗不再被"正常"牌独占——每张牌都有机会拿一批候选梗，让模型按语境自己挑；认真/低情绪不发 */
+    let rp=privateWith?null:drawRP(lowMood?"soft":null);
+    if(rp&&!canTemplate&&rp.weight<=1)rp=drawRP("soft");
     let myMemes=[];
-    if(!heartfelt&&!lowMood&&text&&Math.random()<0.45){
+    if(!noMeme&&!lowMood&&text&&!nonsense&&Math.random()<0.45){
       myMemes=pickMemeCandidates(text,usedMemes,3);
       myMemes.forEach(x=>{if(usedMemes.indexOf(x)<0)usedMemes.push(x);});
     }
@@ -2218,12 +2346,12 @@ async function send(){
   const owedCard=[];      /* 被顶掉牌的人，接龙时优先补自己的牌 */
   const pendingChain=[];  /* 人不够时没排上的接话，留到接龙补完（两人也能跑完整三连） */
   /* z134：接龙流派并进梗库（CHAIN_MEMES）——小米的话命中连环梗触发词才起接龙，不再随机抽牌 */
-  const chainHit=(!heartfelt&&!privateWith)?matchChainMeme(text):null;
+  const chainHit=(!noMeme&&!privateWith&&!nonsense)?matchChainMeme(text):null;
   /* z135：他们也能起接龙——偶尔（8%）把小米说的事套进流派梗起头，平常话不碰 */
   let aiLead=null,aiLeadDraw=null;
   {
     const _bare=String(text||"").replace(/[\s。！？!?~～….,，]/g,"");
-    if(!chainHit&&!heartfelt&&!lowMood&&!privateWith&&draws.length>=2&&_bare.length>2&&Math.random()<0.08){
+    if(!chainHit&&!noMeme&&!lowMood&&!privateWith&&!nonsense&&draws.length>=2&&_bare.length>2&&Math.random()<0.08){
       aiLead=CHAIN_MEMES.find(c=>c.name==="恐惧派")||CHAIN_MEMES[0];
       aiLeadDraw=draws[Math.floor(Math.random()*draws.length)];
     }
@@ -2237,7 +2365,7 @@ async function send(){
   const bare=String(text||"").replace(/[\s。！？!?~～….,，]/g,"");
   const tinyMsg=bare.length<=2||/^(嗯|哦|啊|额|呃|哈|嗨|哟|好|行|OK|ok|笑死|哈哈+|呜|唉)[啊呀哦呢嘛哈]*$/i.test(bare);
   let quietTurn=false;
-  if(!heartfelt&&!privateWith&&!formation&&talkers.length>1){
+  if(!noMeme&&!privateWith&&!formation&&talkers.length>1){
     if(lowMood){
       quietTurn=true;
       const comforter=draws.find(d=>d.m&&d.m.name==="Vesta")||draws[0];
@@ -2259,7 +2387,8 @@ async function send(){
     try{
       const saidNow=playedWords();
       const ctx={memes:free?myMemes:[],rp:rp,
-        emojiMode:pickEmojiMode(),packPick:pickPackCandidates(text||""),imgDesc:imgDesc};
+        emojiMode:pickEmojiMode(),packPick:pickPackCandidates(text||""),imgDesc:imgDesc,
+        lvRef:lvRef,nonsense:nonsense};
       if(free){   /* 自由接话：贴着屏幕上最后一句，别重复这轮说过的 */
         ctx.chain=true;
         ctx.lastLine=saidNow.length?saidNow[saidNow.length-1]:"";
@@ -2345,7 +2474,7 @@ async function send(){
       if(__slot>0)await new Promise(r=>setTimeout(r,__slot*120));
       const lazy=aiMsgLazy(m);const sv=makeStreamView(m,lazy,m.name,rp&&/应声虫|复读/.test(rp.name||""));
       try{
-        const reply=(rp&&rp.fixed)?rp.fixed:await callModelNoRepeat(m,text,atts,{heartfelt:heartfelt,memes:myMemes||[],rp:rp,private:!!privateWith,soft:lowMood,emojiMode:pickEmojiMode(),packPick:pickPackCandidates(text||""),imgDesc:imgDesc},partial=>sv.push(partial));
+        const reply=(rp&&rp.fixed)?rp.fixed:await callModelNoRepeat(m,text,atts,{heartfelt:heartfelt,noMeme:noMeme,memes:myMemes||[],rp:rp,private:!!privateWith,soft:lowMood,emojiMode:pickEmojiMode(),packPick:pickPackCandidates(text||""),imgDesc:imgDesc,lvRef:lvRef,nonsense:nonsense},partial=>sv.push(partial));
         const sh=await sv.finish(reply);
         if(sh){sh.el.classList.add("spoke");setTimeout(()=>sh.el.classList.remove("spoke"),750);}
         m.history.push({role:"assistant",content:reply});
@@ -2375,9 +2504,9 @@ async function send(){
   if(myRun!==runSeq){status.textContent="";return;} /* 这一轮被打断了，不再接龙 */
 
   /* ===== 收尾补接龙：欠的台词、欠的牌必须出；没欠的就 30% 概率随便加一两句 ===== */
-  let followUps=(!heartfelt&&!quietTurn&&talkers.length>1&&Math.random()<0.3)?1+Math.floor(Math.random()*2):0;
+  let followUps=(!noMeme&&!quietTurn&&talkers.length>1&&Math.random()<0.3)?1+Math.floor(Math.random()*2):0;
   const needMore=pendingChain.length+owedCard.length;
-  if(!heartfelt&&!quietTurn&&needMore+1>followUps)followUps=needMore+1;
+  if(!noMeme&&!quietTurn&&needMore+1>followUps)followUps=needMore+1;
   let prev=null;
   for(let i=0;i<followUps;i++){
     if(myRun!==runSeq)break;   /* 被新消息打断就别再往下接龙 */
@@ -2394,7 +2523,7 @@ async function send(){
     const saidNow=playedWords();
     const lastLine=saidNow.length?saidNow[saidNow.length-1]:"";
     let cMemes=[];
-    if(!heartfelt&&Math.random()<0.6&&cRp){
+    if(!noMeme&&Math.random()<0.6&&cRp){
       cMemes=pickMemeCandidates(lastLine||"",usedMemes,6);
       cMemes.forEach(x=>{if(usedMemes.indexOf(x)<0)usedMemes.push(x);});
     }
@@ -2636,12 +2765,12 @@ function wxClearChat(){
     renderConvList();
   }catch(e){sysMsg("清空失败："+e.message);}
 }
-/* z120：思考深度滑块 —— 点档位设置，写本地，下次打开还在 */
+/* z120/z137: think level - 0=reply 1=read-context 2=advise 3=do-the-job */
 const THINK_INFO=[
-  {name:"不思考",label:"思考深度",desc:"<b>秒回玩梗</b>　快模型 · 短回复 · 有梗 · 最便宜<span class='ts-cost'>（默认）</span>"},
-  {name:"轻度",label:"轻度 ✦",desc:"<b>认真一点</b>　快模型 · 不玩梗 · 回复稍长 · 依旧很快"},
-  {name:"中度",label:"中度 ✦✦",desc:"<b>换大模型</b>　GLM-5.3 · 认真人设 · 想得更全 · 慢一点、贵几倍"},
-  {name:"重度",label:"重度 ✦✦✦",desc:"<b>真·深度思考</b>　大模型 + 打开思考链 · 最慢最烧钱<span class='ts-cost'>（可能不稳定）</span>"}
+  {name:"不思考",label:"思考深度",desc:"<b>回话</b>　快模型 · 秒回 · 短一句 · 有趣像人 · 最便宜<span class='ts-cost'>（默认）</span>"},
+  {name:"轻度",label:"轻度 ✦",desc:"<b>读懂</b>　快模型 · 翻上下文 · 真接住你那句话 · 稍长一点"},
+  {name:"中度",label:"中度 ✦✦",desc:"<b>出主意</b>　GLM-5.3 · 你想不明白时帮你拆、给判断、给下一步 · 慢一点"},
+  {name:"重度",label:"重度 ✦✦✦",desc:"<b>干正事</b>　大模型 + 打开思考链 · 写东西、做决定、算账 · 最慢最烧钱<span class='ts-cost'>（可能不稳定）</span>"}
 ];
 /* z125：照抄 dsh-think-intensity —— 冷青→青绿→紫→玫红，发光轨道 + 椭圆拇指 + 光点 */
 const TS_COLORS=[
@@ -2723,8 +2852,13 @@ function initThinkSheet(){
     if(!dragging)return;dragging=false;
     if(row){row.classList.remove("dragging");row.style.setProperty("--iq-scale","1");}
     const finalLv=lvFromRatio(lastRatio);
+    const changed=finalLv!==thinkLevel;
     applyThinkLevel(finalLv);lastLv=finalLv;
-    sysMsg("思考深度：「"+THINK_INFO[finalLv].name+"」"+(finalLv===3?"（会打开模型自己的思考，慢一些）":""));
+    /* z137: switching level mid-turn - what was already said stays,
+       but replies not yet sent use the new level. */
+    if(changed)turnLvSet(finalLv);
+    sysMsg("思考深度：「"+THINK_INFO[finalLv].name+"」"+(finalLv===3?"（会打开模型自己的思考，慢一些）":"")
+      +(changed&&busy?"　· 还没说出口的那几句已经按新档来了":""));
   };
   let lastRatio=TS_POS[thinkLevel]/100;
   const start2=e=>{lastRatio=ratioFromX(e.clientX||0);start(e);};

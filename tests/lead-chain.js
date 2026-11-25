@@ -104,7 +104,14 @@ const reset = () => { calls.length = 0; };
   console.log((res.userLead && res.userLead.test('有') && res.userLead.test('有的。') ? '✅' : '❌') + ' 资源派认出「有」「有的。」');
   console.log((res.userLead && !res.userLead.test('有点累了') ? '✅' : '❌') + ' 「有点累了」不会误判');
   const mm = html.match(/maxTok=\[(\d+),(\d+),(\d+),(\d+)\]/);
-  console.log((mm && mm[3] === '260' ? '✅' : '❌') + ' 深度回复上限 ' + (mm ? mm[3] : '?') + ' 字');
+  console.log((mm && mm[3] === '320' ? '✅' : '❌') + ' 中度回复上限 ' + (mm ? mm[3] : '?') + ' 字');
+  console.log((mm && mm[1] === '55' ? '✅' : '❌') + ' 回话档上限 ' + (mm ? mm[1] : '?') + ' 字');
+  console.log((mm && mm[2] === '160' ? '✅' : '❌') + ' 读懂档上限 ' + (mm ? mm[2] : '?') + ' 字');
+  console.log((mm && mm[4] === '700' ? '✅' : '❌') + ' 干正事上限 ' + (mm ? mm[4] : '?') + ' 字');
+  const toneOn = html.indexOf('RULE_TONE') >= 0 && /messages\.push\(\{role:"system",content:RULE_TONE\}\)/.test(html);
+  console.log((toneOn ? '✅' : '❌') + ' 客服腔禁令常驻');
+  const nzOn = /function isNonsense\(t\)/.test(html);
+  console.log((nzOn ? '✅' : '❌') + ' 不可解检测函数在位');
   const memLine = html.match(/else if\(heartfelt\)memShow=sharedMem\.length<=(\d+)/);
   console.log((memLine && memLine[1] === '800' ? '✅' : '❌') + ' 深度记忆上限 ' + (memLine ? memLine[1] : '?') + ' 字');
 
