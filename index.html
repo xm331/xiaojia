@@ -446,7 +446,7 @@ html,body{background:#ededed!important}
   }catch(e){}
 })();
 /* 版本号：每次改内容我都会改这个号，页面打开时自动探测更新 */
-const APP_VER="1.7.5";
+const APP_VER="1.7.6";
 /* ===== 自动更新探测：绕开浏览器缓存，发现新版就自动刷新一次 ===== */
 (function(){
   try{
@@ -645,35 +645,17 @@ const RULE_TONE="【不许客服腔】下面这些句式一律不许出现在你
   "·他说「噜啦啦」→ 你回「？」或「你又发什么癫」（看不懂就扣问号，不猜）\n"+
   "·他说「刚被领导骂了」→ 你回「骂你什么」（接住情绪，一句，别列建议）\n"+
   "·他说「我是不是该辞职」→ 你回「想辞就辞，最烦的是想走又不动」（给判断，别给方案清单）";
-/* ===== z142：不思考档 —— 用小米真实聊天截图里的真人语气重写 =====
-   他贴了6张真实微信截图（群聊+私聊），抽出真人朋友的实际回复方式：
-   一个问号就完事 / 随手接不讲逻辑 / 损一句句号收尾 / 一个词 / 故意复读但只复一句 /
-   词穷就说不知道 / 群里应一声 / 加入发癫往下编——全是"短+不点评"。
-   上一版(141)我编的样本("腿：你去投诉啊")方向错了：那还是在点评他的话。
-   这一版样本全来自真人语料，且明确禁止点评、禁止展开、禁止抠他词拼句子。 */
-const RULE_LV0="【这一轮·不思考·真人微信秒回】你现在就是微信里那个真人朋友，正在打字。短、随便、有脾气，不像客服不像解说。\\n"+
-  "①**一句封顶**，两到七个字最正常，说完就停，绝不接第二句。\\n"+
-  "②**死命令·压倒一切（违反就是错）**：\\n"+
-  "   ·**绝不许点评他这句话是怎么说的**——不许说他押韵、顺口、精神状态好、发癫、骂人改口这类话。**观后感一句都不许有**，你是在跟他聊天不是在写评语。\\n"+
-  "   ·绝不胡编乱造（没发生的人/事/约定/见过的东西，一个字不许编）。\\n"+
-  "   ·绝不分析、解释、建议、追问一串、安慰、翻译、列点、客服腔。\\n"+
-  "   ·**必须贴着他这句话接**——不许跑题、不许答非所问、不许自说自话岔开。他聊什么你接什么。\\n"+
-  "③**真人怎么接话（从真实聊天里提炼的行为规律，不是台词，别照搬任何具体句子）**：\\n"+
-  "   ·**看不懂就只给一个符号**——一个问号就完事，不解释不问为什么。\\n"+
-  "   ·**没头没尾的话就随手接一个词**——不用讲逻辑、别追问，但得贴着他那个话题，别岔开。\\n"+
-  "   ·**他得意或发癫，就损他一句、句号收尾**——损完就停，不解释不补刀不展开。\\n"+
-  "   ·**他分享东西，就一个短问句或一个词**——问是什么、或直接一个词带过。\\n"+
-  "   ·**他讲荒诞的事，就顺着往下接、加入他一起编**——但绝不点评这事合不合理。\\n"+
-  "   ·**他说累烦倒霉，就一句很短的动作**——让他去吃点什么、别熬了那种，不安慰不分析。\\n"+
-  "   ·**他晒东西显摆，就一句短的**——问他哪来的、或一句轻描淡写的捧，别长篇。\\n"+
-  "   ·**他问简单问题就直接答；不会就说不知道**，绝不硬编。\\n"+
-  "   ·**没词了就认**——一个语气词加句号、或直接说不知道，别硬凑好笑。\\n"+
-  "   ·群里刚有人问过了，就应一声表示你也想问。\\n"+
-  "   **上面全是「怎么接」的路数，不是让你背句子。照着这个路数、用他这一句现编，才像真人；照搬任何一句都是错的。**\\n"+
-  "④**复读只有一种情况允许**：故意玩梗复读他一个词，而且**只复这一句就停**。\\n"+
-  "⑤**绝不从他句子里抠词拼你的回复**——要么真接住、要么给个符号/省略号，绝不硬套。\\n"+
-  "⑥接不上就不接：群里不冒泡，或回个省略号。真人不会每句都接住。\n"+
-  "⑦**没词了/没听懂，就从「？」「纳尼」「神马」「。」「你在干什么呀」里随机挑一个甩出去，五种机会均等**——不用硬找话说，也不算答非所问。";
+/* ===== z147：不思考档提示词瘦身 =====
+   查证结论：输入越长首字越慢；规则太长会互相稀释、关键指令被淹没；纯否定禁令写太多反而诱导禁词。
+   所以只留六条短规矩 + 五选一兜底。来源还是 z142 那批真人聊天截图，路数没变，只是不再列十条例子。 */
+const RULE_LV0="【这一轮·不思考·微信秒回】你就是微信里那个真人朋友，正在打字。短、随便、有脾气。\\n"+
+  "①一句封顶，两到七个字最正常，说完就停。\\n"+
+  "②贴着他这一句接：他聊什么你接什么。跑题、答非所问、自说自话都算错。\\n"+
+  "③只管接话：损他一句、一个短问句、一个词、一句很短的动作、顺着他往下编——挑一个，自然说。不分析、不解释、不建议、不安慰、不点评他这句话怎么说、不列点、不客服腔。\\n"+
+  "④不胡编：没发生的人、事、约定、见过的东西，一个字都不许有。\\n"+
+  "⑤看不懂或没词了，就从「？」「纳尼」「神马」「。」「你在干什么呀」里随机挑一个甩出去，五种机会均等——不用硬找话说，也不算答非所问。\\n"+
+  "⑥别从他句子里抠词拼你的回复；想复读只复他一个词、复一句就停；群里接不上就别冒泡。\\n"+
+  "照着这些路数用他这一句现编，别背任何固定句子。";
 const RULE_LV1="【这一轮·接着聊】他这句是在接着前面的话往下说——翻一眼上面聊到哪，接的是'他这句话在回应什么'，不只是字面那几个字。像那种一直在听他说话的朋友，顺着接、接得准。\n"+
   "①还是短、还能玩梗、还能损他——只是比秒回档多一分'我知道你为什么说这句'。\n"+
   "②可以点一下他话里的情绪（累、烦、得意、失落），一句带过就行；**别替他下定义、别分析他为什么这样、别猜他想要什么、别给一串建议**。\n"+
@@ -1592,7 +1574,7 @@ function userMsg(t,atts){
     else if(a.type==="image")media+=`<img src="${a.dataUrl}">`;
     else if(a.frames&&a.frames[0])media+=`<img src="${a.frames[0]}"><span style="font-size:10px;color:#ffffffaa">🎬 ${a.frames.length}帧</span>`;
   });
-  d.innerHTML=`<div class="mavatar" onclick="pickMyAvatar()" title="点一下，换头像">${myAvatarHTML()}</div><div class="body"><div class="meta">你</div><div class="bubble">${t?esc(t):""}${media}</div></div>`;
+  d.innerHTML=`<div class="mavatar" onclick="pickMyAvatar()" title="点一下，换头像">${myAvatarHTML()}</div><div class="body"><div class="meta">我</div><div class="bubble">${t?esc(t):""}${media}</div></div>`;
   chatBox.appendChild(d);scrollBottom();
 }
 function aiMsgShell(m){
@@ -2209,7 +2191,9 @@ async function callModel(m,userText,atts,ctx,onChunk){
     if(messages[i].role==="system"&&typeof messages[i].content==="string")messages[i]={role:"system",content:localize(messages[i].content)};
   }
   /* z136：私聊喂私聊历史，群聊喂群历史——两条线彻底分开 */
-  (ctx&&ctx.private?(m.private||[]):m.history).forEach(h=>messages.push(h));
+  /* z147：不思考档只认最近4条，旧账不翻——输入短一半，首字更快；其他档照旧 */
+  const _hist=ctx&&ctx.private?(m.private||[]):(m.history||[]);
+  (lvNow===0?_hist.slice(-4):_hist).forEach(h=>messages.push(h));
   /* z137: level reference - shared per turn.
      Sent requests are frozen; not-yet-sent ones read the new level. */
   const lv=(ctx&&ctx.lvRef&&typeof ctx.lvRef.v==="number")?ctx.lvRef.v
@@ -2359,7 +2343,7 @@ function renderPrivate(m){
   (m.private||[]).forEach(h=>{
     if(h.role==="user"){
       const d=document.createElement("div");d.className="msg me";
-      d.innerHTML='<div class="mavatar" onclick="pickMyAvatar()" title="点一下，换头像">'+myAvatarHTML()+'</div><div class="body"><div class="meta">你</div><div class="bubble">'+esc(h.content)+'</div></div>';
+      d.innerHTML='<div class="mavatar" onclick="pickMyAvatar()" title="点一下，换头像">'+myAvatarHTML()+'</div><div class="body"><div class="meta">我</div><div class="bubble">'+esc(h.content)+'</div></div>';
       chatBox.appendChild(d);
     }else{
       const shell=aiMsgShell(m);
@@ -2621,6 +2605,9 @@ async function send(){
   }
   /* 这一行决定走哪条通道：命中连环梗或AI起头=接龙，没命中=正常说话 */
   const formation=!!(chainHit||aiLead);
+  /* z147：不思考档戴帽子太多会变慢也会硬套——正常说话通道摘掉本轮人设牌和梗候选，
+     固定底色调料还在，够定味。接龙要台词队形，不碰。 */
+  if(lvRef.v===0&&!formation)draws.forEach(d=>{d.rp=null;d.myMemes=[];});
 
   /* z146·真人群聊不排队：你一句话，一两个人接，偶尔三人都来。
      接龙有队形不动；你低落→Vesta一人先哄；只发两个字/语气词→随机一人。
