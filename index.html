@@ -1785,8 +1785,8 @@ const EMOJIS=("😂 🤣 😭 🥲 😅 😁 😊 🥰 😍 🤗 😘 😜 🤪 
 const CUSTOM_PACK=[
   {file:"soldout.jpg", name:"卖掉了", hint:"东西卖光了/售罄/没货了，表示被抢空、没了"},
   {file:"jiuniyepi.jpg", name:"就你也配", hint:"嘲讽对方不配、不屑、看不起，怼人的时候用"},
-  {file:"routuan.jpg", name:"看到肉棒的", hint:"黄色梗：看到男性生殖器(肉棒)，眼睛一亮/兴奋冲过去——开黄腔、开车、看到大东西时用，别当成真的干饭"},
-  {file:"diuleilao.jpg", name:"我丢你老母", hint:"广西话骂人「我丢你老母」(=操你老妈)，情绪激动、吐槽、骂人时用，不是四川话口头禅"},
+  {file:"routuan.jpg", name:"看到肉帮的你", hint:"看到吃的/肉就兴奋冲过去，馋、干饭、见到好东西"},
+  {file:"diuleilao.jpg", name:"我丢雷老谋", hint:"四川话口头禅式吐槽/惊讶/无语，情绪激动时"},
   {file:"baigou.jpg", name:"白狗", hint:"一只呆萌白狗，卖萌、无辜、发呆、可爱"},
   {file:"hug.jpg", name:"抱抱", hint:"两个笑脸抱在一起，安慰/和好/贴贴/表达喜欢和温暖"},
   {file:"jiayou.jpg", name:"加油", hint:"握拳打气，加油/鼓励/振作/你可以的"},
@@ -1811,8 +1811,8 @@ const CUSTOM_PACK=[
 const PACK_KEYS={
   "soldout.jpg":["卖光","售罄","没货","抢空","没了"],
   "jiuniyepi.jpg":["不配","嘲讽","看不起","怼人"],
-  "routuan.jpg":["肉棒","开车","黄腔","黄色","生殖器","看到肉","大东西","眼睛一亮"],
-  "diuleilao.jpg":["丢你老母","丢雷老谋","骂人","广西话","草泥马","卧槽","妈的","你妈"],
+  "routuan.jpg":["吃的","肉","馋","干饭","饿"],
+  "diuleilao.jpg":["吐槽","惊讶","无语","卧槽","绝了"],
   "baigou.jpg":["可爱","卖萌","无辜","发呆"],
   "hug.jpg":["安慰","难过","抱抱","和好","喜欢"],
   "jiayou.jpg":["加油","鼓励","振作","你可以"],
@@ -1831,17 +1831,16 @@ const PACK_KEYS={
   "pianyi.jpg":["便宜","廉价","掉价","不值钱","嘲讽","阴阳","看不起","就这"],
   "ganren.jpg":["感动","泪目","哭了","感人","催泪","眼泪","假惺惺"]
 };
-/* z144：按【她自己写的回复】去表情库挑一个贴上来——不再让模型吐标记、不再掷骰子。
+/* z143：按【她自己写的回复】去表情库挑一个贴上来——不再让模型吐标记、不再掷骰子。
    规则：必须关键词硬命中才贴（PACK_KEYS 命中 +6 分，name/hint 二字词命中 +1 分，满 3 分才用），
    命中 0 就一个都不贴。贴不贴由关键词表说了算——小米填得越全，贴得越准。
-   z144：不思考档(lv0)改按【用户那句话】贴——秒回就几个字，按回复根本命中不了；
-   正经事(heartfelt)不贴——保持分寸。 */
+   不思考档(lv0)不贴——秒回要快；正经事(heartfelt)不贴——保持分寸。 */
 function pickStickerByReply(replyText,o){
   o=o||{};
   const lv=(o.lvRef&&typeof o.lvRef.v==="number")?o.lvRef.v:(typeof o.lv==="number"?o.lv:0);
+  /* z144: no-think replies are too short to match - use the user's text instead */
   if(o.heartfelt||!CUSTOM_PACK.length)return null;
-  /* z144：不思考档按用户那句话匹配（回复太短命中不了）；其他档按她自己的回复 */
-  const s=String((lv===0?(o.userText||replyText):replyText)||"");if(!s)return null;
+  const s=String((lv===0&&o.userText)?o.userText:replyText||"");if(!s)return null;
   const words=[];
   for(let i=0;i<s.length-1;i++){
     const w=s.slice(i,i+2);
@@ -2630,7 +2629,7 @@ async function send(){
       const reply=(rp&&rp.fixed)?rp.fixed:await callModelNoRepeat(m,free?"(接着群里的话，自然接一句)":text,atts,ctx,partial=>sv.push(partial));
       const sh=await sv.finish(reply);
       /* z143: sticker by reply text */
-      try{const pk=pickStickerByReply(reply,Object.assign({userText:text},ctx));if(pk)attachSticker(sh,pk.p);}catch(e){}
+      try{const pk=pickStickerByReply(reply,Object.assign({},ctx,{userText:text}));if(pk)attachSticker(sh,pk.p);}catch(e){}
       if(sh){sh.el.classList.add("spoke");setTimeout(()=>sh.el.classList.remove("spoke"),750);}
       if(privateWith){
         /* z136：私聊回复只进私聊记录，不进群历史 */
