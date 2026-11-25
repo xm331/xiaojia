@@ -112,7 +112,7 @@ const member = { id: 'a', name: 'Nyx', url: 'u', key: 'sk-test', model: 'zai-org
   await callModel(member, '在干嘛', [], {}, null);
   const sys = sentBody.messages.map(x => typeof x.content === 'string' ? x.content : '').join('\n');
   console.log((sys.indexOf('一句封顶') >= 0 ? '✅' : '❌') + ' 不思考档：一句封顶（z139 新语义）');
-  console.log((sentBody.max_tokens === 35 ? '✅' : '❌') + ' 秒回上限 = ' + sentBody.max_tokens + '（原 55）');
+  console.log((sentBody.max_tokens === 18 ? '✅' : '❌') + ' 秒回上限 = ' + sentBody.max_tokens + '（原 55）');
 
   console.log('\n== C. 被掐断时不留半句 ==');
   mode = 'cut';

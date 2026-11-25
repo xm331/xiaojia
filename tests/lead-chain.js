@@ -105,7 +105,7 @@ const reset = () => { calls.length = 0; };
   console.log((res.userLead && !res.userLead.test('有点累了') ? '✅' : '❌') + ' 「有点累了」不会误判');
   const mm = html.match(/maxTok=\[(\d+),(\d+),(\d+),(\d+)\]/);
   console.log((mm && mm[3] === '320' ? '✅' : '❌') + ' 中度回复上限 ' + (mm ? mm[3] : '?') + ' 字');
-  console.log((mm && mm[1] === '35' ? '✅' : '❌') + ' 回话档上限 ' + (mm ? mm[1] : '?') + ' 字');
+  console.log((mm && mm[1] === '18' ? '✅' : '❌') + ' 回话档上限 ' + (mm ? mm[1] : '?') + ' 字');
   console.log((mm && mm[2] === '160' ? '✅' : '❌') + ' 读懂档上限 ' + (mm ? mm[2] : '?') + ' 字');
   console.log((mm && mm[4] === '700' ? '✅' : '❌') + ' 干正事上限 ' + (mm ? mm[4] : '?') + ' 字');
   const toneOn = html.indexOf('RULE_TONE') >= 0 && /messages\.push\(\{role:"system",content:RULE_TONE\}\)/.test(html);
